@@ -13,7 +13,7 @@ create_doc.connectors()
 project = "netbox3"
 copyright = "2023, Vladimirs Prusakovs"
 author = "VP"
-release = "0.1.0"
+release = "0.1.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
