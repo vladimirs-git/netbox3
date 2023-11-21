@@ -11,12 +11,6 @@ class IpAddressesC(Connector):
 
     path = "ipam/ip-addresses/"
 
-    def __init__(self, **kwargs):
-        """Init IpAddressesC."""
-        super().__init__(**kwargs)
-        items = ["parent"]
-        self._need_split.extend(items)
-
     # noinspection PyIncorrectDocstring
     def get(self, **kwargs) -> LDAny:  # pylint: disable=W0246
         """Request data from Netbox using filtering parameters.

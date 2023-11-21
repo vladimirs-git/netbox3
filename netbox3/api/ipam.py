@@ -34,12 +34,6 @@ class IpamAC:
 
         path = "ipam/aggregates/"
 
-        def __init__(self, **kwargs):
-            """Init AggregatesC."""
-            super().__init__(**kwargs)
-            items = ["prefix"]
-            self._need_split.extend(items)
-
     class AsnRangesC(Connector):
         """AsnRangesC."""
 

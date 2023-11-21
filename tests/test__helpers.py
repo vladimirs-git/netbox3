@@ -145,6 +145,74 @@ def test__url_to_path(url, expected):
 
 # ============================== params ==============================
 
+@pytest.mark.parametrize("params_ld, default, expected", [
+    ([], {}, []),
+    ([{}], {}, []),
+    ([{"a": ["A2"]}], {}, [{"a": ["A2"]}]),
+    ([{"a": ["A2"]}, {"b": ["B2"]}], {}, [{"a": ["A2"]}, {"b": ["B2"]}]),
+    ([{"a": ["A2"]}], {"a": ["A1"]}, [{"a": ["A2"]}]),
+    ([{"b": ["B2"]}], {"a": ["A1"]}, [{"a": ["A1"], "b": ["B2"]}]),
+    ([{"a": ["A2"]}], {"a": ["A1"], "b": ["B1"]}, [{"a": ["A2"], "b": ["B1"]}]),
+    ([{"a": ["A2"], "b": ["B2"]}],
+     {"a": ["A1"], "b": ["B1"]}, [{"a": ["A2"], "b": ["B2"]}]),
+])
+def test__join_params(params_ld, default, expected):
+    """helpers.join_params()."""
+    actual = h.join_params(params_ld=params_ld, default_get=default)
+    assert actual == expected
+
+
+@pytest.mark.parametrize("need_split, params_d, expected", [
+    ([], {}, []),
+    ([], {"a": [1]}, [{"a": [1]}]),
+    ([], {"a": [1, 1]}, [{"a": [1, 1]}]),
+    ([], {"a": [1, 2]}, [{"a": [1, 2]}]),
+    ([], {"a": [1], "b": [1]}, [{"a": [1], "b": [1]}]),
+    ([], {"or_a": [1, 2]}, [{"or_a": [1]}, {"or_a": [2]}]),
+    (["^a"], {}, []),
+    (["^a"], {"a": [1]}, [{"a": [1]}]),
+    (["^a"], {"a": [1, 1]}, [{"a": [1]}, {"a": [1]}]),
+    (["^a"], {"a": [1, 2]}, [{"a": [1]}, {"a": [2]}]),
+    (["^a"], {"ab": [1, 2]}, [{"ab": [1]}, {"ab": [2]}]),
+    (["^a"], {"a": [1], "b": [1]}, [{"a": [1], "b": [1]}]),
+    (["^a"], {"a": [1, 2], "b": [1]}, [{"a": [1], "b": [1]}, {"a": [2], "b": [1]}]),
+    (["^a", "^b"], {"a": [1, 2], "b": [1, 2]},
+     [{"a": [1], "b": [1]}, {"a": [1], "b": [2]}, {"a": [2], "b": [1]}, {"a": [2], "b": [2]}]),
+    (["^a", "^b"], {"a": [1, 2], "b": [1, 2], "c": [1, 2], "d": [1]},
+     [{"a": [1], "b": [1], "c": [1, 2], "d": [1]},
+      {"a": [1], "b": [2], "c": [1, 2], "d": [1]},
+      {"a": [2], "b": [1], "c": [1, 2], "d": [1]},
+      {"a": [2], "b": [2], "c": [1, 2], "d": [1]}]),
+])
+def test__make_combinations(need_split, params_d, expected):
+    """helpers.make_combinations()."""
+    actual = h.make_combinations(need_split=need_split, params_d=params_d)
+    assert actual == expected
+
+
+@pytest.mark.parametrize("need_split, params_d, expected", [
+    ([], {}, set()),
+    ([], {"or_a": [1, 2], "b": [1, 2]}, {"or_a"}),
+    (["a"], {"a": [1, 2], "b": [1, 2]}, {"a"}),
+])
+def test__get_keys_need_split(need_split, params_d, expected):
+    """helpers._get_keys_need_split()."""
+    actual = h._get_keys_need_split(need_split=need_split, params_d=params_d)
+    assert actual == expected
+
+
+@pytest.mark.parametrize("params_ld, expected", [
+    ([], []),
+    ([{"a_or": [1]}], [{"a_or": [1]}]),
+    ([{"or_a": [1]}], [{"a": [1]}]),
+    ([{"or_a": [1]}, {"or_a": [2]}, {"a_or": [3]}], [{"a": [1]}, {"a": [2]}, {"a_or": [3]}]),
+])
+def test__change_params_or(params_ld, expected):
+    """helpers.change_params_or()."""
+    actual = h.change_params_or(params_ld=params_ld)
+    assert actual == expected
+
+
 @pytest.mark.parametrize("max_len, values, expected", [
     (2047, [], [(0, 1)]),
     (2047, [IP1], [(0, 1)]),

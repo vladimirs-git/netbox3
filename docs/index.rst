@@ -2,21 +2,21 @@ netbox3
 ========
 
 
-
 .. note::
 
    This project is under active development.
+
 
 Overview
 ========
 
 
-**netbox3** comprises t\ :strike:`h`\ ree Python tools designed for working with Netbox objects using the REST API.
+**netbox3** comprises t\ :strike:`h`\ ree Python tools designed for working with Netbox using the REST API.
 Checked with Python >= 3.8, Netbox >= v3.6.
 
 - :ref:`NbApi` Request data from Netbox using filter parameters identical to those in the web interface filter form.
-- :ref:`NbForager` Join Netbox objects within itself, represent them as a multidimensional dictionary. Save the objects to the cache file.
-- :ref:`NbBranch` Extract a value from a Netbox object using a chain of keys and return the typed value.
+- :ref:`NbForager` Join Netbox objects within itself, represent them as a multidimensional dictionary.
+- :ref:`NbBranch` Extract the typed values from a Netbox object dictionary by using a chain of keys.
 
 
 ----------------------------------------------------------------------------------------
@@ -28,6 +28,8 @@ Checked with Python >= 3.8, Netbox >= v3.6.
     NbApi <api/nb_api.rst>
     NbForager <foragers/nb_forager.rst>
     NbBranch <branch/nb_branch.rst>
+
+:ref:`Examples`
 
 
 ----------------------------------------------------------------------------------------
@@ -139,7 +141,7 @@ Get data in threading mode.
 
     from netbox3 import NbApi
 
-    # Enable DEBUG mode to demonstrate the speed of requests to the Netbox API
+    # Enable logging DEBUG mode
     logging.getLogger().setLevel(logging.DEBUG)
     logging.getLogger().addHandler(logging.StreamHandler())
 

@@ -1,4 +1,4 @@
-# pylint: disable=W0212,R0801,W0621
+# pylint: disable=W0212,R0801,R0915,W0621
 
 """Unittests foragers."""
 from pathlib import Path
@@ -10,7 +10,7 @@ import requests_mock
 from _pytest.monkeypatch import MonkeyPatch
 from requests_mock import Mocker
 
-from netbox3 import helpers as h, nb_forager
+from netbox3 import helpers as h, nb_forager, NbApi
 from netbox3.nb_cache import NbCache
 from netbox3.nb_forager import NbForager
 from netbox3.nb_tree import NbTree, insert_tree
@@ -48,6 +48,82 @@ def test__app_model(nbf: NbForager):
             actual = model_o.__class__.__name__
             expected = "".join([f"{s.capitalize()}" for s in model.split("_")]) + "F"
             assert actual == expected
+
+
+def test__init(nbf: NbForager):
+    """NbForager.__init__()."""
+    assert nbf.api.host == "netbox"
+    assert nbf.api.ipam.aggregates.host == "netbox"
+    assert nbf.api.ipam.aggregates.token == ""
+    assert nbf.api.ipam.aggregates.scheme == "https"
+    assert nbf.api.ipam.aggregates.port == 0
+    assert nbf.api.ipam.aggregates.verify is True
+    assert nbf.api.ipam.aggregates.limit == 1000
+    assert nbf.api.ipam.aggregates.url_length == 2047
+    assert nbf.api.ipam.aggregates.threads == 1
+    assert nbf.api.ipam.aggregates.interval == 0.0
+    assert nbf.api.ipam.aggregates.timeout == 60
+    assert nbf.api.ipam.aggregates.max_retries == 0
+    assert nbf.api.ipam.aggregates.sleep == 10
+    assert nbf.api.ipam.aggregates._default_get == {}
+    assert nbf.api.ipam.aggregates._loners == ["^q$", "^prefix$"]
+    assert nbf.cache == "netbox.pickle"
+
+    params = {
+        "host": "netbox",
+        "token": "token",
+        "scheme": "http",
+        "port": "8080",
+        "verify": False,
+        "limit": 1,
+        "url_length": 1,
+        # Multithreading
+        "threads": 2,
+        "interval": 1,
+        # Errors processing
+        "timeout": 1,
+        "max_retries": 1,
+        "sleep": 1,
+        # Settings
+        "default_get": {"any": ["a1"]},
+        "loners": {"any": ["a1"]},
+        "cache": "1.pickle"
+    }
+    nbf = NbForager(**params)  # type: ignore
+    assert nbf.api.host == "netbox"
+    assert nbf.api.ipam.aggregates.host == "netbox"
+    assert nbf.api.ipam.aggregates.token == "token"
+    assert nbf.api.ipam.aggregates.scheme == "http"
+    assert nbf.api.ipam.aggregates.port == 8080
+    assert nbf.api.ipam.aggregates.verify is False
+    assert nbf.api.ipam.aggregates.limit == 1
+    assert nbf.api.ipam.aggregates.url_length == 1
+    assert nbf.api.ipam.aggregates.threads == 2
+    assert nbf.api.ipam.aggregates.interval == 1.0
+    assert nbf.api.ipam.aggregates.timeout == 1
+    assert nbf.api.ipam.aggregates.max_retries == 1
+    assert nbf.api.ipam.aggregates.sleep == 1
+    assert nbf.api.ipam.aggregates._loners == ["a1"]
+    assert nbf.cache == "1.pickle"
+
+    api = NbApi(**params)  # type: ignore
+    assert api.host == "netbox"
+    assert api.ipam.aggregates.host == "netbox"
+    assert api.ipam.aggregates.token == "token"
+    assert api.ipam.aggregates.scheme == "http"
+    assert api.ipam.aggregates.port == 8080
+    assert api.ipam.aggregates.verify is False
+    assert api.ipam.aggregates.limit == 1
+    assert api.ipam.aggregates.url_length == 1
+    assert api.ipam.aggregates.threads == 2
+    assert api.ipam.aggregates.interval == 1.0
+    assert api.ipam.aggregates.timeout == 1
+    assert api.ipam.aggregates.max_retries == 1
+    assert api.ipam.aggregates.sleep == 1
+    assert api.ipam.aggregates._loners == ["a1"]
+
+    diff = set(params).difference(set(api.ipam.aggregates._init_params))
+    assert diff == {"cache"}
 
 
 def test__host(nbf: NbForager):

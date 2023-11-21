@@ -1,11 +1,13 @@
 """Helper functions."""
+import itertools
+import re
 import urllib
 from typing import Any
 from urllib.parse import urlencode, ParseResult
 
 from vhelpers import vlist, vparam
 
-from netbox3.types_ import LStr, LDAny, DDDLInt, LValue, LParam, LDList, DList
+from netbox3.types_ import LStr, LDAny, DDDLInt, LValue, LParam, LDList, DList, SeqStr, SStr
 from netbox3.types_ import LTInt2, DAny, TValues, TLists, T2Str, T3Str
 
 
@@ -201,6 +203,104 @@ def url_to_path(url: str) -> str:
 
 
 # ============================== params ==============================
+
+
+def join_params(params_ld: LDList, default_get: DList) -> LDList:
+    """Join params_ld and default filtering parameters.
+
+    :param params_ld: Filtering parameters.
+    :param default_get: Default filtering parameters.
+    :return: Joined filtering parameters.
+    """
+    if not params_ld:
+        if not default_get:
+            return []
+        return [default_get.copy()]
+
+    params_ld_: LDList = []
+    for params_d in params_ld.copy():
+        if not params_d:
+            continue
+        default_d = {k: v for k, v in default_get.items() if k not in params_d}
+        params_d.update(default_d)
+        params_ld_.append(params_d)
+    return params_ld_
+
+
+def make_combinations(need_split: SeqStr, params_d: DList) -> LDList:
+    """Split the parallel parameters from the kwargs dictionary to valid combinations.
+
+    Need to be split predefined in the need_split list and boolean values in params_d.
+    :param need_split: Parameters that need to be split into different requests.
+    :param params_d: A dictionary of keyword arguments.
+    :return: A list of dictionaries containing the valid combinations.
+    """
+    keys_need_split = _get_keys_need_split(need_split, params_d)
+    no_need_split_d = {k: v for k, v in params_d.items() if k not in keys_need_split}
+
+    key_no_need_split = ""
+    need_split_d: DList = {}
+    for key, values in params_d.items():
+        if key in keys_need_split:
+            for value in values:
+                need_split_d.setdefault(key, []).append({key: [value]})
+        else:
+            key_no_need_split = key
+
+    params_l = list(need_split_d.values())
+    if key_no_need_split:
+        params_l.append([no_need_split_d])
+
+    params_ld: LDList = []
+    combinations = list(itertools.product(*params_l))
+    for combination in combinations:
+        params_d_ = {}
+        for param_d_ in combination:
+            params_d_.update(param_d_)
+        if params_d_:
+            params_ld.append(params_d_)
+    return params_ld
+
+
+def change_params_or(params_ld: LDList) -> LDList:
+    """Change parameters with name or_{parameter}.
+
+    :param params_ld: Parameters that need to update.
+    :return: Updated parameters.
+    """
+    params_ld_: LDList = []
+    for params_d in params_ld:
+        params_d_: DList = {}
+        for name, values in params_d.items():
+            if name.startswith("or_"):
+                name = name.replace("or_", "", 1)
+            params_d_[name] = values
+        params_ld_.append(params_d_)
+    return params_ld_
+
+
+def _get_keys_need_split(need_split: SeqStr, params_d: DList) -> SStr:
+    """Get keys that need to be split.
+
+    :param need_split: Parameters that need to be split into different requests.
+    :param params_d: A dictionary of keyword arguments.
+    :return: Keys that need to be split.
+    """
+    keys_need_split: SStr = set()
+
+    keys = list(params_d)
+    while keys:
+        key = keys.pop(0)
+        # predefined
+        for regex in need_split:
+            if re.search(regex, key):
+                keys_need_split.add(key)
+                break
+        # or_{parameter}
+        if key.startswith("or_"):
+            keys_need_split.add(key)
+
+    return keys_need_split
 
 
 def generate_slices(url: str, max_len: int, key: str, values: LValue, params: LParam) -> LTInt2:

@@ -88,20 +88,15 @@ class Connector(BaseC):
         filter form. The value of each parameter can be either a single value
         or a list of multiple values.
 
-        Different filtering parameters work like ``AND`` operator,
-        while multiple values in the same parameter work like ``OR`` operator.
-
         Split the query to multiple requests if the URL length exceeds maximum
-        length due to a long list of GET parameters (should be < 2048 characters,
-        but in my case Netbox support up to 4000 characters).
+        length due to a long list of GET parameters.
 
-        Multithreading can be used to request a large amount of data rapidly ,
+        Multithreading can be used to request a large amount of data rapidly,
         with intervals between threads (to optimize session spikes and achieve
         script stability in Docker with limited resources).
 
         To determine the filtering parameters for various models, you can use:
 
-        - Netbox Web UI filter page https://demo.netbox.dev/dcim/sites/,
         - API schema https://demo.netbox.dev/api/schema/swagger-ui,
         - Example https://github.com/vladimirs-git/netbox3/tree/main/examples,
         - Oficial documentation (if you're lucky).

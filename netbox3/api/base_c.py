@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import itertools
 import json
 import logging
 import re
@@ -21,9 +20,11 @@ from requests.exceptions import ReadTimeout, ConnectionError as RequestsConnecti
 from vhelpers import vdict, vlist, vparam
 
 from netbox3 import helpers as h
+from netbox3.api import param_path
+from netbox3.api.param_path import ParamPath, DParamPath
 from netbox3.exceptions import NbApiError
-from netbox3.types_ import DAny, DStr, LDAny, SStr, LStr, DLInt, DList, LDList
-from netbox3.types_ import TLists, OUParam, SeqStr, OSeqStr, LParam
+from netbox3.types_ import DAny, DStr, LDAny, SStr, LStr, DLInt, DList, LDList, DLStr, DDAny
+from netbox3.types_ import TLists, OUParam, OSeqStr, LParam
 
 
 class BaseC:
@@ -54,6 +55,8 @@ class BaseC:
         "timeout",
         "max_retries",
         "sleep",
+        "default_get",
+        "loners",
     ]
     _reserved_ipam_keys = [
         "overlapped",
@@ -65,56 +68,68 @@ class BaseC:
     def __init__(self, **kwargs):
         """Init BaseC.
 
-        :param host: Netbox host name.
-        :param token: Netbox token.
-        :param scheme: Access method: https or http. Default "https".
-        :param port: TCP port. Default 443. NOTE: Not implemented.
+        :param str host: Netbox host name.
 
-        :param verify: Transport Layer Security. True - A TLS certificate required,
-            False - Requests will accept any TLS certificate.
-        :param limit: Split the query to multiple requests if the response exceeds the limit.
-            Default 1000.
-        :param url_length: Split the query to multiple requests if the URL length exceeds
-            this value. Default 2047.
-        :param threads: Threads count. Default 1, loop mode.
-        :param interval: Wait this time between requests (seconds).
-            Default 0. Useful for request speed shaping.
+        :param str token: Netbox token.
 
-        :param timeout: Request timeout (seconds). Default 60.
-        :param max_retries: Retry the request multiple times if it receives a 500 error
-            or timed-out. Default 1.
-        :param sleep: Interval before the next retry after receiving a 500 error (seconds).
-            Default 10.
+        :param str scheme: Access method: `https` or `http`. Default is `https`.
+
+        :param int port: ``Not implemented`` TCP port. Default is `443`.
+
+        :param bool verify: Transport Layer Security.
+            `True` - A TLS certificate required,
+            `False` - Requests will accept any TLS certificate.
+            Default is `True`.
+
+        :param int limit: Split the query to multiple requests
+            if the count of objects exceeds this value. Default is `1000`.
+
+        :param int url_length: Split the query to multiple requests
+            if the URL length exceeds maximum length due to a long list of
+            GET parameters. Default is `2047`.
+
+        :param int threads: Threads count.
+            `1` - Loop mode.
+            `2 or higher` -  Threading mode.
+            Default is `1`.
+
+        :param float interval: Wait this time between requests (seconds).
+            Default is `0`. Useful to optimize session spikes and achieve
+            script stability in Docker with limited resources.
+
+        :param int timeout: Session timeout (seconds). Default is `60`.
+
+        :param int max_retries: Retries the request multiple times if
+            the Netbox API does not respond or responds with a timeout.
+            Default is `0`.
+
+        :param int sleep: Interval (seconds) before the next retry after
+            session timeout reached. Default is `10`.
+
+        :param dict default_get: Set default filtering parameters.
+
+        :param dict loners: Set :ref:`Filtering parameters by multiple values`.
         """
         self.host: str = _init_host(**kwargs)
         self.token: str = str(kwargs.get("token") or "")
         self.scheme: str = _init_scheme(**kwargs)
         self.port: int = int(kwargs.get("port") or 0)
-
         self.verify: bool = _init_verify(**kwargs)
         self.limit: int = int(kwargs.get("limit") or 1000)
-        self.timeout: float = float(kwargs.get("timeout") or 60)
-        self.max_retries: int = int(kwargs.get("max_retries") or 1)
-        self.sleep: float = float(kwargs.get("sleep") or 10)
-        self.calls_interval: float = float(kwargs.get("sleep") or 0)
+        self.url_length = int(kwargs.get("url_length") or 2047)
+        # Multithreading
         self.threads: int = _init_threads(**kwargs)
         self.interval: float = float(kwargs.get("interval") or 0.0)
-        self.url_length = int(kwargs.get("url_length") or 2047)
+        # Errors processing
+        self.timeout: float = float(kwargs.get("timeout") or 60)
+        self.max_retries: int = int(kwargs.get("max_retries") or 0)
+        self.sleep: float = float(kwargs.get("sleep") or 10)
+        # Settings
+        self.default_get: DDAny = dict(kwargs.get("default_get") or {})
+        self.loners: DLStr = dict(kwargs.get("loners") or {})
 
-        self.default: DAny = {}  # default params
-        self._need_split: LStr = [
-            "^cf_.+",
-            "^q$",
-            "^status$",
-            "^tag$",
-            "^has_primary_ip$",  # dcim/devices, virtualization/virtual-machines
-            "^virtual_chassis_member$",  # dcim/devices
-            "^assigned_to_interface$",  # ipam/ip-addresses
-            "^family$",  # ipam/aggregates, prefixes, ip-addresses
-            "^mask_length$",  # ipam/aggregates, prefixes, ip-addresses
-            "^ui_visibility$",  # extras/custom-fields
-        ]
-        self._param_id_map: DAny = self._init_param_id_map()
+        self._default_get: DList = self._init_default_get()
+        self._loners: LStr = self._init_loners()
         self._results: LDAny = []  # cache for received objects from Netbox
         self._session: Session = requests.session()
 
@@ -122,77 +137,6 @@ class BaseC:
         """__repr__."""
         name = self.__class__.__name__
         return f"<{name}: {self.host}>"
-
-    def _init_param_id_map(self) -> DAny:
-        """Init a dictionary that maps model name to their corresponding new path.
-
-        This mapping is used to get objects from Netbox by name instead of id.
-
-        :return: Dictionary with mapping data.
-        """
-        data = {
-            # circuits
-            "circuit": {"path": "circuits/circuits/", "key": "cid"},
-            "provider": {"path": "circuits/providers/", "key": "name"},
-            "provider_account": {"path": "circuits/provider-accounts/", "key": "name"},
-            # dcim
-            "platform": {"path": "dcim/platforms/", "key": "name"},
-            "region": {"path": "dcim/regions/", "key": "name"},
-            "site": {"path": "dcim/sites/", "key": "name"},
-            "site_group": {"path": "dcim/site-groups/", "key": "name"},
-            # extras
-            "content_type": {"path": "extras/content-types/", "key": "display"},
-            "for_object_type": {"path": "extras/content-types/", "key": "display"},
-            # ipam
-            "export_target": {"path": "ipam/route-targets/", "key": "name"},
-            "exporting_vrf": {"path": "ipam/vrfs/", "key": "name"},
-            "import_target": {"path": "ipam/route-targets/", "key": "name"},
-            "importing_vrf": {"path": "ipam/vrfs/", "key": "name"},
-            "present_in_vrf": {"path": "ipam/vrfs/", "key": "name"},
-            "rir": {"path": "ipam/rirs/", "key": "name"},
-            "vrf": {"path": "ipam/vrfs/", "key": "name"},
-            # tenancy
-            "tenant": {"path": "tenancy/tenants/", "key": "name"},
-            "tenant_group": {"path": "tenancy/tenant-groups/", "key": "name"},
-            # virtualization
-            "bridge": {"path": "virtualization/interfaces/", "key": "name"},
-        }
-
-        group_map = {
-            "dcim/sites/": {"group": {"path": "dcim/site-groups/", "key": "name"}},
-            "ipam/vlans/": {"group": {"path": "ipam/vlan-groups/", "key": "name"}},
-            "tenancy/tenants/": {"group": {"path": "tenancy/tenant-groups/", "key": "name"}},
-            "virtualization/clusters/": {
-                "group": {"path": "virtualization/cluster-groups/", "key": "name"}
-            },
-        }
-        if data_ := group_map.get(self.path):
-            data.update(data_)
-
-        # ipam/ip-addresses/ use parent without map
-        parent_map = {
-            "dcim/locations/": {"parent": {"path": "dcim/locations/", "key": "name"}},
-            "dcim/regions/": {"parent": {"path": "dcim/regions/", "key": "name"}},
-            "dcim/site-groups/": {"parent": {"path": "dcim/site-groups/", "key": "name"}},
-            "tenancy/tenant-groups/": {"parent": {"path": "tenancy/tenant-groups/", "key": "name"}},
-            "virtualization/interfaces/": {
-                "parent": {"path": "virtualization/interfaces/", "key": "name"}
-            },
-        }
-        if data_ := parent_map.get(self.path):
-            data.update(data_)
-
-        # role
-        if self.path == "virtualization/virtual-machines/":
-            data.update({"role": {"path": "dcim/device-roles/", "key": "name"}})
-        else:
-            data.update({"role": {"path": "ipam/roles/", "key": "name"}})
-
-        # type
-        if self.path == "circuits/circuits/":
-            data.update({"type": {"path": "circuits/circuit-types/", "key": "name"}})
-
-        return data
 
     # ============================= property =============================
 
@@ -239,6 +183,8 @@ class BaseC:
             keys=self._slices,
             params=params,
         )
+        if not params_ld:
+            params_ld = [{}]
 
         # threads
         if self.threads > 1:
@@ -453,8 +399,9 @@ class BaseC:
 
         :raise: ConnectionError if the limit of retries is reached.
         """
+        max_retries = self.max_retries + 1
         counter = 0
-        while counter < self.max_retries:
+        while counter < max_retries:
             counter += 1
             try:
                 response: Response = self._session.get(
@@ -467,7 +414,7 @@ class BaseC:
                 attempts = f"{counter} of {self.max_retries}"
                 msg = f"Session timeout={self.timeout!r}sec reached, {attempts=}."
                 logging.warning(msg)
-                if counter < self.max_retries:
+                if counter < max_retries:
                     msg = f"Next attempt after sleep={self.sleep}sec."
                     logging.warning(msg)
                     time.sleep(self.sleep)
@@ -504,10 +451,11 @@ class BaseC:
 
         :return: Updated parameters.
         """
-        kwargs = self._change_param_name_to_id(kwargs)
         params_d: DList = _lists_wo_dupl(kwargs)
-        params_ld: LDList = _make_combinations(self._need_split, params_d)
-        params_ld = self._join_params(*params_ld)
+        params_d = self._change_params_name_to_id(params_d)
+        params_ld: LDList = h.make_combinations(self._loners, params_d)
+        params_ld = h.change_params_or(params_ld)
+        params_ld = h.join_params(params_ld, self._default_get)
         return params_ld
 
     def _headers(self) -> DStr:
@@ -517,24 +465,6 @@ class BaseC:
             "Content-Type": "application/json",
         }
         return headers
-
-    def _join_params(self, *params) -> LDList:
-        """Join received and default filtering parameters.
-
-        :param params: Received filtering parameters.
-        :return: Joined filtering parameters.
-        """
-        if not params:
-            return [self.default.copy()]
-
-        params_ld: LDList = []
-        default_keys = sorted(list(self.default), reverse=True)
-        for params_d in params:
-            for key in default_keys:
-                if params_d.get(key) is None:
-                    params_d = {**{key: self.default[key]}, **params_d}
-            params_ld.append(params_d)
-        return params_ld
 
     @staticmethod
     def _check_keys(items: LDAny, denied: OSeqStr = None) -> None:
@@ -611,7 +541,61 @@ class BaseC:
             return True
         return False
 
-    # =========================== messages ===========================
+    # =========================== helpers ===========================
+
+    def _init_default_get(self) -> DList:
+        """Init default filtering parameters."""
+        params_d_: DList = {}
+        for path, params_d in self.default_get.items():
+            if path == self.path:
+                params_d_ = _lists_wo_dupl(params_d)
+                break
+        return params_d_
+
+    def _init_loners(self) -> LStr:
+        """Init loners filtering parameters."""
+        default: DLStr = {
+            "any": ["^q$"],
+            "ipam/aggregates/": ["^prefix$"],
+            "ipam/prefixes/": ["^within_include$"],
+            "extras/content-types/": ["id", "app_label", "model"],
+        }
+        loners_d: DAny = self.loners or default
+
+        loners: LStr = list(loners_d.get("any") or [])
+        for path, loners_ in loners_d.items():
+            if self.path == path:
+                loners.extend(list(loners_))
+        return loners
+
+    def _change_params_name_to_id(self, params_d: DList) -> DList:
+        """Change parameter with name to parameter with id.
+
+        Request all related objects from the Netbox, find the name, and replace it with the ID.
+        :param params_d: Parameters that need to update.
+        :return: Updated parameters.
+        """
+        need_delete: LStr = []
+        need_add: DLInt = {}
+
+        mapping_d: DParamPath = param_path.data(self.path)
+        need_change: DList = param_path.need_change(params_d, mapping_d)
+
+        for name, values in need_change.items():
+            param_path_: ParamPath = mapping_d[name]
+            path = param_path_.path
+            key = param_path_.key
+
+            response: LDAny = self._query(path)
+
+            if ids := [d["id"] for d in response if d[key] in values]:
+                need_delete.append(name)
+                name_id = f"{name}_id"
+                need_add.setdefault(name_id, []).extend(ids)
+
+        params_d_: DList = {k: v for k, v in params_d.items() if k not in need_delete}
+        params_d_.update(need_add)
+        return params_d_
 
     @staticmethod
     def _msg_status_code(response: Response) -> str:
@@ -626,34 +610,6 @@ class BaseC:
 
         return f"{status_code=} {text=} {url=}"
 
-    # ======================== params helpers ========================
-
-    def _change_param_name_to_id(self, params_d: DAny) -> DAny:
-        """Change parameter with name to parameter with id.
-
-        Request all related objects from the Netbox, find the name, and replace it with the ID.
-        :param params_d: Parameters that need to update.
-        :return: Updated parameters.
-        """
-        need_delete: LStr = []
-        need_add: DLInt = {}
-        for name, value in params_d.items():
-            values = vlist.to_list(value)
-            if name in self._param_id_map:
-                path = self._param_id_map[name]["path"]
-                key = self._param_id_map[name]["key"]
-
-                response: LDAny = self._query(path=path)
-
-                if ids := [d["id"] for d in response if d[key] in values]:
-                    need_delete.append(name)
-                    name_id = f"{name}_id"
-                    need_add.setdefault(name_id, []).extend(ids)
-
-        params_d_ = {k: v for k, v in params_d.items() if k not in need_delete}
-        params_d_.update(need_add)
-        return params_d_
-
 
 # ============================= helpers ==========================
 
@@ -667,8 +623,8 @@ def _init_host(**kwargs) -> str:
 
 
 def _init_scheme(**kwargs) -> str:
-    """Init scheme "https" or "http"."""
-    scheme = str(kwargs.get("scheme") or "https")
+    """Init scheme: https or http."""
+    scheme = str(kwargs.get("scheme") or "")
     expected = ["https", "http"]
     if scheme not in expected:
         raise ValueError(f"{scheme=}, {expected=}")
@@ -703,53 +659,3 @@ def _lists_wo_dupl(kwargs: DAny) -> DList:
         else:
             params_d[key] = [value]
     return params_d
-
-
-def _make_combinations(need_split: SeqStr, params_d: DList) -> LDList:
-    """Split the parallel parameters from the kwargs dictionary to valid combinations.
-
-    Need to be split predefined in the need_split list and boolean values in params_d.
-    :param need_split: Parameters that need to be split into different requests.
-    :param params_d: A dictionary of keyword arguments.
-    :return: A list of dictionaries containing the valid combinations.
-    """
-    keys_need_split: SStr = set()
-
-    keys = list(params_d)
-    while keys:
-        key = keys.pop()
-        # predefined
-        for regex in need_split:
-            if re.search(regex, key):
-                keys_need_split.add(key)
-                break
-        # boolean
-        for value in params_d[key]:
-            if isinstance(value, bool):
-                keys_need_split.add(key)
-                break
-
-    no_need_split_d = {k: v for k, v in params_d.items() if k not in keys_need_split}
-
-    key_no_need_split = ""
-    need_split_d: DList = {}
-    for key, values in params_d.items():
-        if key in keys_need_split:
-            for value in values:
-                need_split_d.setdefault(key, []).append({key: [value]})
-        else:
-            key_no_need_split = key
-
-    params_l = list(need_split_d.values())
-    if key_no_need_split:
-        params_l.append([no_need_split_d])
-
-    params_ld: LDList = []
-    combinations = list(itertools.product(*params_l))
-    for combination in combinations:
-        params_d_ = {}
-        for param_d_ in combination:
-            params_d_.update(param_d_)
-        if params_d_:
-            params_ld.append(params_d_)
-    return params_ld

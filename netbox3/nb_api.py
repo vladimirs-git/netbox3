@@ -1,5 +1,4 @@
-# pylint: disable=R0801
-# pylint: disable=R0902,R0913,R0915
+# pylint: disable=R0801,R0902,R0913,R0914,R0915
 
 """NbApi, Python wrapper of Netbox REST API."""
 
@@ -16,8 +15,7 @@ from netbox3.api.tenancy import TenancyAC
 from netbox3.api.users import UsersAC
 from netbox3.api.virtualization import VirtualizationAC
 from netbox3.api.wireless import WirelessAC
-from netbox3.branch.nb_branch import NbBranch
-from netbox3.types_ import DAny
+from netbox3.types_ import ODLStr, ODDAny
 
 
 class NbApi:
@@ -54,21 +52,25 @@ class NbApi:
     """
 
     def __init__(
-            self,
-            host: str,
-            token: str = "",
-            scheme: str = "https",
-            port: int = 0,
-            verify: bool = True,
-            limit: int = 1000,
-            url_length: int = 2047,
-            threads: int = 1,
-            interval: float = 0.0,
-            # Errors processing
-            timeout: int = 60,
-            max_retries: int = 1,
-            sleep: int = 10,
-            **kwargs,
+        self,
+        host: str,
+        token: str = "",
+        scheme: str = "https",
+        port: int = 0,  # Not implemented
+        verify: bool = True,
+        limit: int = 1000,
+        url_length: int = 2047,
+        # Multithreading
+        threads: int = 1,
+        interval: float = 0.0,
+        # Errors processing
+        timeout: int = 60,
+        max_retries: int = 0,
+        sleep: int = 10,
+        # Settings
+        default_get: ODDAny = None,
+        loners: ODLStr = None,
+        **kwargs,
     ):
         """Init NbApi.
 
@@ -110,6 +112,10 @@ class NbApi:
         :param int sleep: Interval (seconds) before the next retry after
             session timeout reached. Default is `10`.
 
+        :param dict default_get: Set default filtering parameters.
+
+        :param dict loners: Set :ref:`Filtering parameters by multiple values`.
+
         Application/model connectors:
 
         :ivar obj circuits: :py:class:`.CircuitsAC` :doc:`CircuitsAC`.
@@ -136,6 +142,8 @@ class NbApi:
             "timeout": timeout,
             "max_retries": max_retries,
             "sleep": sleep,
+            "default_get": default_get,
+            "loners": loners,
             **kwargs,
         }
 
@@ -283,31 +291,3 @@ class NbApi:
     def url(self) -> str:
         """Netbox base URL."""
         return self.circuits.circuit_terminations.url_base
-
-    # =========================== method =============================
-
-    def default_active(self) -> None:
-        """Set default filter parameters for all objects.
-
-        This is useful when you only need to work with active IPv4 objects.
-        """
-        # ipam
-        self.ipam.aggregates.default = {"family": 4}
-        self.ipam.ip_addresses.default = {"family": 4, "status": "active"}
-        self.ip_ranges.default = {"family": 4, "status": ["active"]}
-        self.ipam.prefixes.default = {"family": 4, "status": ["active", "container"]}
-        self.ipam.vlans.default = {"status": "active"}
-        # dcim
-        self.dcim.devices.default = {"has_primary_ip": True, "status": "active"}
-        self.dcim.sites.default = {"status": "active"}
-        # circuits
-        self.circuits.circuits.default = {"status": "active"}
-
-    def version(self) -> str:
-        """Get Netbox version.
-
-        :return: Netbox version, if version >= 3, otherwise empty string.
-        """
-        status_d: DAny = self.status.get()
-        version = NbBranch(status_d).str("netbox-version")
-        return version

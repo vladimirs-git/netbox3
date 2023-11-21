@@ -87,27 +87,30 @@ Parameter          Path                        Parameter             Path       
 =================  ==========================  ====================  ==============================  =======
 
 
-Filtering parameters, only single
----------------------------------
-The following parameters can only be requested as single values in the Netbox API.
-To implement functionality for ``multiple values`` in the same parameter
-(to work like ``OR`` operator), NbApi splits parameters into multiple requests.
-I have not checked all endpoints (only parameters you can find in ``./examples``),
-and for this reason, ``multiple values`` could return all objects without proper filtering.
-If you encounter this issue, please let me know so that I can fix it.
-As a workaround, you can add the required parameter to the ``BaseC._need_split`` list.
+----------------------------------------------------------------------------------------
 
-======================  =======================================
-Parameter               Path
-======================  =======================================
-cf_.+                   any
-q                       any
-status                  any
-tag                     any
-has_primary_ip          dcim/devices, virtualization/virtual-machines
-virtual_chassis_member  dcim/devices
-assigned_to_interface   ipam/ip-addresses
-family                  ipam/aggregates, prefixes, ip-addresses
-mask_length             ipam/aggregates, prefixes, ip-addresses
-ui_visibility           extras/custom-fields
-======================  =======================================
+Filtering parameters by multiple values
+---------------------------------------
+The parameters in the table can only be requested as single values in the Netbox API `#14305`_.
+To implement functionality ``multiple values`` for the same parameter,
+NbApi splits ``loners`` parameters into multiple requests.
+I have not checked all endpoints, so the Netbox API may return improperly filtered objects.
+If you encounter this issue, please let me know so that I can fix it.
+As a workaround, you can set ``loners`` to change NbApi default behavior.
+
+======================  ================================================================
+Path                    Parameter
+======================  ================================================================
+any                     q
+ipam/aggregates         prefix
+ipam/aggregates         within_include
+extras/content-types    app_label, id, model
+======================  ================================================================
+
+`Example of how to change loners`_
+
+
+----------------------------------------------------------------------------------------
+
+.. _`Example of how to change loners`: https://github.com/vladimirs-git/netbox3/tree/main/examples/api/api__loners.py
+.. _`#14305`: https://github.com/netbox-community/netbox/discussions/14305

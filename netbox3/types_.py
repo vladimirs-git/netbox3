@@ -54,11 +54,13 @@ TParam = Tuple[Param, ...]
 UStr = Union[str, SeqStr]
 
 # 3 level
+ODDAny = Optional[DDAny]
 DDDLStr = Dict[str, Dict[str, DLStr]]
 DDLInt = Dict[str, DLInt]
 LDList = List[DList]
 LLDAny = List[LDAny]
 LLParam = List[LParam]
+ODLStr = Optional[DLStr]
 OUStr = Optional[UStr]
 ULDAny = Union[LDAny, DAny]
 

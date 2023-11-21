@@ -17,11 +17,11 @@ class NbCache:
     """NbCache, Read/write objects from/to the cache pickle file."""
 
     def __init__(
-            self,
-            tree: ONbTree = None,
-            status: ODAny = None,
-            cache: str = "",
-            **kwargs,
+        self,
+        tree: ONbTree = None,
+        status: ODAny = None,
+        cache: str = "",
+        **kwargs,
     ):
         """Init NbCache.
 
