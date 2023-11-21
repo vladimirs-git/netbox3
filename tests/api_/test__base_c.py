@@ -12,19 +12,20 @@ from requests_mock import Mocker
 from netbox3.api import base_c
 from netbox3.exceptions import NbApiError
 from netbox3.nb_api import NbApi
-from netbox3.types_ import DAny, LDAny, SeqStr, LStr
-
-# test__validate_concurrent_params
-A_1, A_2 = {"a": [1]}, {"a": [2]}
-B_1, B_2 = {"b": [1]}, {"b": [2]}
-AB_COMBO1 = [{**A_1, **B_1}, {**A_2, **B_1}]
-AB_COMBO2 = [{**A_1, **B_1}, {**A_1, **B_2}, {**A_2, **B_1}, {**A_2, **B_2}]
+from netbox3.nb_forager import NbForager
+from netbox3.types_ import DAny, LDAny, SeqStr
 
 
 @pytest.fixture
 def api():
     """Init API"""
     return NbApi(host="netbox")
+
+
+@pytest.fixture
+def nbf() -> NbForager:
+    """Init NbForager."""
+    return NbForager(host="netbox")
 
 
 @pytest.fixture
@@ -57,9 +58,13 @@ def mock_session(status_code: int, content: str = ""):
     ({"host": "netbox", "scheme": "http"}, "http://netbox/api/circuits/circuit-terminations/"),
 ])
 def test__url(params, expected):
-    """Connector.url."""
+    """BaseC.url."""
     api = NbApi(**params)
     actual = api.circuits.circuit_terminations.url
+    assert actual == expected
+
+    nbf = NbForager(**params)
+    actual = nbf.api.circuits.circuit_terminations.url
     assert actual == expected
 
 
@@ -69,73 +74,54 @@ def test__url(params, expected):
     ({"host": "netbox", "scheme": "http"}, "http://netbox/api/"),
 ])
 def test__url_base(params, expected):
-    """Connector.url_base."""
+    """BaseC.url_base."""
     api = NbApi(**params)
     actual = api.circuits.circuit_terminations.url_base
+    assert actual == expected
+
+    nbf = NbForager(**params)
+    actual = nbf.api.circuits.circuit_terminations.url_base
     assert actual == expected
 
 
 # ============================== helper ==============================
 
-@pytest.mark.parametrize("default, params_, expected", [
-    ({}, [{}], [{}]),
-    ({}, [{"a": "A2"}], [{"a": "A2"}]),
-    ({}, [{"a": "A2"}, {"b": "B2"}], [{"a": "A2"}, {"b": "B2"}]),
-    ({"a": "A1"}, [{"a": "A2"}], [{"a": "A2"}]),
-    ({"a": "A1"}, [{"b": "B2"}], [{"a": "A1", "b": "B2"}]),
-    ({"a": "A1", "b": "B1"}, [{"a": "A2"}], [{"a": "A2", "b": "B1"}]),
-    ({"a": "A1", "b": "B1"}, [{"a": "A2", "b": "B2"}], [{"a": "A2", "b": "B2"}]),
-])
-def test__join_params(
-        api: NbApi,
-        default: DAny,
-        params_: LDAny,
-        expected: LDAny,
-):
-    """Connector._join_params()."""
-    api.ip_addresses.default = default
-    actual = api.ip_addresses._join_params(*params_)
-    assert actual == expected
-
-
-@pytest.mark.parametrize("kwargs, expected", [
+@pytest.mark.parametrize("default_get, expected", [
     ({}, {}),
-    ({"a": 1}, {"a": [1]}),
-    ({"a": [1, 1]}, {"a": [1]}),
-    ({"a": (1, 2)}, {"a": [1, 2]}),
-    ({"a": 1, "b": 3}, {"a": [1], "b": [3]}),
+    ({"ipam/prefixes/": {"family": 4}}, {"family": [4]}),
+    ({"ipam/prefixes/": {"family": [4, 6]}}, {"family": [4, 6]}),
 ])
-def test__lists_wo_dupl(kwargs: DAny, expected: LDAny):
-    """Connector._lists_wo_dupl()."""
-    actual = base_c._lists_wo_dupl(kwargs=kwargs)
+def test__init_default_get(default_get, expected):
+    """BaseC._init_default_get()."""
+    api = NbApi(host="netbox", default_get=default_get)
+    actual = api.ipam.prefixes._default_get
+    assert actual == expected
+
+    api.ipam.prefixes.default_get = default_get
+    actual = api.ipam.prefixes._init_default_get()
+    assert actual == expected
+
+    nbf = NbForager(host="netbox", default_get=default_get)
+    actual = nbf.api.ipam.prefixes._default_get
     assert actual == expected
 
 
-@pytest.mark.parametrize("need_split, params_d, expected", [
-    ([], {}, []),
-    ([], A_1, [A_1]),
-    ([], {"a": [1, 1]}, [{"a": [1, 1]}]),
-    ([], {"a": [1, 2]}, [{"a": [1, 2]}]),
-    ([], {**A_1, **B_1}, [{**A_1, **B_1}]),
-    ([], {"a": [True, True]}, [{"a": [True]}, {"a": [True]}]),
-    ([], {"a": [True, False]}, [{"a": [True]}, {"a": [False]}]),
-    (["^a"], {}, []),
-    (["^a"], A_1, [A_1]),
-    (["^a"], {"a": [1, 1]}, [A_1, A_1]),
-    (["^a"], {"a": [1, 2]}, [A_1, A_2]),
-    (["^a"], {"ab": [1, 2]}, [{"ab": [1]}, {"ab": [2]}]),
-    (["^a"], {**A_1, **B_1}, [{**A_1, **B_1}]),
-    (["^a"], {**{"a": [1, 2]}, **B_1}, AB_COMBO1),
-    (["^a", "^b"], {**{"a": [1, 2]}, **{"b": [1, 2]}}, AB_COMBO2),
-    (["^a", "^b"], {**{"a": [1, 2]}, **{"b": [1, 2]}, **{"c": [1, 2], "d": [1]}},
-     [{"a": [1], "b": [1], "c": [1, 2], "d": [1]},
-      {"a": [1], "b": [2], "c": [1, 2], "d": [1]},
-      {"a": [2], "b": [1], "c": [1, 2], "d": [1]},
-      {"a": [2], "b": [2], "c": [1, 2], "d": [1]}]),
+@pytest.mark.parametrize("loners, expected", [
+    ({}, ["^q$", "^prefix$"]),
+    ({"any": ["a1"], "ipam/aggregates/": ["a2"], "ipam/prefixes/": ["a3"]}, ["a1", "a2"]),
 ])
-def test__make_combinations(need_split: LStr, params_d: DAny, expected: LDAny):
-    """Connector._make_combinations()."""
-    actual = base_c._make_combinations(need_split=need_split, params_d=params_d)
+def test__init_loners(loners, expected):
+    """BaseC._init_loners()."""
+    api = NbApi(host="netbox", loners=loners)
+    actual = api.ipam.aggregates._loners
+    assert actual == expected
+
+    api.ipam.aggregates.loners = loners
+    actual = api.ipam.aggregates._init_loners()
+    assert actual == expected
+
+    nbf = NbForager(host="netbox", loners=loners)
+    actual = nbf.api.ipam.aggregates._loners
     assert actual == expected
 
 
@@ -154,33 +140,34 @@ def test__check_keys(
         denied: SeqStr,
         error: Any,
 ):
-    """Connector._check_keys()."""
+    """BaseC._check_keys()."""
     if error:
         with pytest.raises(error):
-            api.ip_addresses._check_keys(items=items, denied=denied)
+            api.ipam.ip_addresses._check_keys(items=items, denied=denied)
     else:
         api.ip_addresses._check_keys(items=items, denied=denied)
 
 
 @pytest.mark.parametrize("params_d, expected", [
-    ({"a": "A"}, {"a": "A"}),
-    ({"a": ["A", "B"]}, {"a": ["A", "B"]}),
-    ({"vrf": "typo"}, {"vrf": "typo"}),
-    ({"vrf": "VRF 1"}, {"vrf_id": [1]}),
+    # ({"a": ["A"]}, {"a": ["A"]}),
+    # ({"a": ["A", "B"]}, {"a": ["A", "B"]}),
+    ({"vrf": ["null"]}, {}),
+    ({"vrf": ["typo"]}, {"vrf": ["typo"]}),
+    ({"vrf": ["VRF 1"]}, {"vrf_id": [1]}),
     ({"vrf": ["VRF 1", "VRF 2"]}, {"vrf_id": [1, 2]}),
     ({"vrf": ["VRF 1", "typo"]}, {"vrf_id": [1]}),
     ({"vrf": ["typo"]}, {"vrf": ["typo"]}),
     ({"present_in_vrf": "VRF 1"}, {"present_in_vrf_id": [1]}),
     ({"present_in_vrf": "VRF 1", "vrf": "VRF 2"}, {"present_in_vrf_id": [1], "vrf_id": [2]}),
 ])
-def test__change_param_name_to_id(
+def test__change_params_name_to_id(
         api: NbApi,
         mock_requests_vrf: Mocker,  # pylint: disable=unused-argument
         params_d: DAny,
         expected: DAny,
 ):
-    """Connector._change_param_name_to_id()."""
-    actual = api.ip_addresses._change_param_name_to_id(params_d=params_d)
+    """BaseC._change_params_name_to_id()."""
+    actual = api.ipam.ip_addresses._change_params_name_to_id(params_d=params_d)
     assert actual == expected
 
 
@@ -200,19 +187,20 @@ def test__retry_requests(
         text: str,
         error: Any,
 ):
-    """Connector._retry_requests()."""
+    """BaseC._retry_requests()."""
     api = NbApi(**kwargs)
     monkeypatch.setattr(Session, "get", mock_session(status_code, text))
     if error:
         with pytest.raises(error):
-            api.ip_addresses._retry_requests(url="")
+            api.ipam.ip_addresses._retry_requests(url="")
     else:
-        response = api.ip_addresses._retry_requests(url="")
+        response = api.ipam.ip_addresses._retry_requests(url="")
         actual = response.status_code
         assert actual == status_code
 
 
 # ============================= helpers ==============================
+
 
 @pytest.mark.parametrize("kwargs, expected", [
     ({}, ValueError),
@@ -220,7 +208,7 @@ def test__retry_requests(
     ({"host": "netbox"}, "netbox"),
 ])
 def test__init_host(kwargs, expected: Any):
-    """base_c._init_scheme()"""
+    """base_c._init_host()"""
     if isinstance(expected, str):
         actual = base_c._init_host(**kwargs)
         assert actual == expected
@@ -244,3 +232,16 @@ def test__init_scheme(kwargs, expected: Any):
     else:
         with pytest.raises(expected):
             base_c._init_scheme(**kwargs)
+
+
+@pytest.mark.parametrize("kwargs, expected", [
+    ({}, {}),
+    ({"a": 1}, {"a": [1]}),
+    ({"a": [1, 1]}, {"a": [1]}),
+    ({"a": (1, 2)}, {"a": [1, 2]}),
+    ({"a": 1, "b": 3}, {"a": [1], "b": [3]}),
+])
+def test__lists_wo_dupl(kwargs: DAny, expected: LDAny):
+    """base_c._lists_wo_dupl()."""
+    actual = base_c._lists_wo_dupl(kwargs=kwargs)
+    assert actual == expected

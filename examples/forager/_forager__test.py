@@ -4,7 +4,7 @@ from datetime import datetime
 
 from netbox3 import NbForager
 
-# Enable DEBUG mode to demonstrate the speed of requests to the Netbox API
+# Enable logging DEBUG mode
 logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger().addHandler(logging.StreamHandler())
 

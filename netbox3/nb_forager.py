@@ -1,5 +1,4 @@
-# pylint: disable=R0801
-# pylint: disable=R0902,R0913
+# pylint: disable=R0801,R0902,R0913
 
 """NbForager."""
 
@@ -27,7 +26,7 @@ from netbox3.messages import Messages
 from netbox3.nb_api import NbApi
 from netbox3.nb_cache import NbCache
 from netbox3.nb_tree import NbTree, insert_tree
-from netbox3.types_ import LStr, DAny, DiDAny
+from netbox3.types_ import LStr, DAny, DiDAny, ODLStr, ODDAny
 
 
 class NbForager:
@@ -39,22 +38,25 @@ class NbForager:
     """
 
     def __init__(  # pylint: disable=R0914
-            self,
-            host: str,
-            token: str = "",
-            scheme: str = "https",
-            port: int = 0,
-            verify: bool = True,
-            limit: int = 1000,
-            url_length: int = 2047,
-            threads: int = 1,
-            interval: float = 0.0,
-            # Errors processing
-            timeout: int = 60,
-            max_retries: int = 1,
-            sleep: int = 10,
-            cache: str = "",
-            **kwargs,
+        self,
+        host: str,
+        token: str = "",
+        scheme: str = "https",
+        port: int = 0,
+        verify: bool = True,
+        limit: int = 1000,
+        url_length: int = 2047,
+        threads: int = 1,
+        interval: float = 0.0,
+        # Errors processing
+        timeout: int = 60,
+        max_retries: int = 0,
+        sleep: int = 10,
+        # Settings
+        default_get: ODDAny = None,
+        loners: ODLStr = None,
+        cache: str = "",
+        **kwargs,
     ):
         """Init NbForager.
 
@@ -102,6 +104,10 @@ class NbForager:
         :param int sleep: Interval (seconds) before the next retry after
             session timeout reached. Default is `10`.
 
+        :param dict default_get: Set default filtering parameters.
+
+        :param dict loners: Set :ref:`Filtering parameters by multiple values`.
+
         Data attributes:
 
         :ivar obj root: :py:class:`NbTree` object that holds raw Netbox objects.
@@ -135,6 +141,8 @@ class NbForager:
             "timeout": timeout,
             "max_retries": max_retries,
             "sleep": sleep,
+            "default_get": default_get,
+            "loners": loners,
             **kwargs,
         }
         # data

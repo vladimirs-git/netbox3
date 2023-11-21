@@ -47,12 +47,6 @@ class ExtrasAC:
 
         path = "extras/content-types/"
 
-        def __init__(self, **kwargs):
-            """Init ContentTypesC."""
-            super().__init__(**kwargs)
-            items = ["id", "app_label", "model"]
-            self._need_split.extend(items)
-
     class CustomFieldChoiceSetsC(Connector):
         """CustomFieldChoiceSetsC."""
 
