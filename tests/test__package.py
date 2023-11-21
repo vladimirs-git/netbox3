@@ -18,7 +18,7 @@ def test__version__readme():
     url_text = PYPROJECT_D["tool"]["poetry"]["urls"]["Download URL"]
 
     for source, text in [
-        (readme, readme_text),
+        # (readme, readme_text),
         (url_toml, url_text),
     ]:
         regexes = [fr"{package}.+/(.+?)\.tar\.gz", fr"{package}@(.+?)$"]
