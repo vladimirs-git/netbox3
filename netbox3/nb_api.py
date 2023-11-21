@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from netbox3.branch.nb_branch import NbBranch
 from netbox3.api.circuits import CircuitsAC
 from netbox3.api.core import CoreAC
 from netbox3.api.dcim import DcimAC
@@ -15,7 +16,7 @@ from netbox3.api.tenancy import TenancyAC
 from netbox3.api.users import UsersAC
 from netbox3.api.virtualization import VirtualizationAC
 from netbox3.api.wireless import WirelessAC
-from netbox3.types_ import ODLStr, ODDAny
+from netbox3.types_ import ODLStr, ODDAny, DAny
 
 
 class NbApi:
@@ -291,3 +292,12 @@ class NbApi:
     def url(self) -> str:
         """Netbox base URL."""
         return self.circuits.circuit_terminations.url_base
+
+    def version(self) -> str:
+        """Get Netbox version.
+
+        :return: Netbox version, if version >= 3, otherwise empty string.
+        """
+        status_d: DAny = self.status.get()
+        version = NbBranch(status_d).str("netbox-version")
+        return version

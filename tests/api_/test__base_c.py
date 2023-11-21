@@ -149,16 +149,18 @@ def test__check_keys(
 
 
 @pytest.mark.parametrize("params_d, expected", [
-    # ({"a": ["A"]}, {"a": ["A"]}),
-    # ({"a": ["A", "B"]}, {"a": ["A", "B"]}),
-    ({"vrf": ["null"]}, {}),
+    ({"a": ["A"]}, {"a": ["A"]}),
+    ({"a": ["A", "B"]}, {"a": ["A", "B"]}),
+    ({"vrf": ["null"]}, {"vrf": ["null"]}),
     ({"vrf": ["typo"]}, {"vrf": ["typo"]}),
     ({"vrf": ["VRF 1"]}, {"vrf_id": [1]}),
     ({"vrf": ["VRF 1", "VRF 2"]}, {"vrf_id": [1, 2]}),
     ({"vrf": ["VRF 1", "typo"]}, {"vrf_id": [1]}),
     ({"vrf": ["typo"]}, {"vrf": ["typo"]}),
-    ({"present_in_vrf": "VRF 1"}, {"present_in_vrf_id": [1]}),
-    ({"present_in_vrf": "VRF 1", "vrf": "VRF 2"}, {"present_in_vrf_id": [1], "vrf_id": [2]}),
+    ({"present_in_vrf": ["null"]}, {"present_in_vrf": ["null"]}),
+    ({"present_in_vrf": ["VRF 1"]}, {"present_in_vrf_id": [1]}),
+    ({"present_in_vrf": ["VRF 1"], "vrf": ["VRF 2"]},
+     {"present_in_vrf_id": [1], "vrf_id": [2]}),
 ])
 def test__change_params_name_to_id(
         api: NbApi,
@@ -218,11 +220,11 @@ def test__init_host(kwargs, expected: Any):
 
 
 @pytest.mark.parametrize("kwargs, expected", [
-    ({}, "https"),
-    ({"scheme": ""}, "https"),
+    ({}, ValueError),
+    ({"scheme": ""}, ValueError),
+    ({"scheme": "typo"}, ValueError),
     ({"scheme": "https"}, "https"),
     ({"scheme": "http"}, "http"),
-    ({"scheme": "typo"}, ValueError),
 ])
 def test__init_scheme(kwargs, expected: Any):
     """base_c._init_scheme()"""

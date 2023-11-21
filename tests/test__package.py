@@ -1,15 +1,14 @@
 """unittests package"""
-
+import ast
 import re
 from pathlib import Path
 
 from vhelpers import vdate, vdict, vpath, vre
-
 ROOT = Path(__file__).parent.parent
 PYPROJECT_D = vdict.pyproject_d(ROOT)
 
 
-def test_version__readme():
+def test__version__readme():
     """Version in README, URL."""
     expected = PYPROJECT_D["tool"]["poetry"]["version"]
     package = PYPROJECT_D["tool"]["poetry"]["name"].replace("_", "-")
@@ -27,22 +26,41 @@ def test_version__readme():
         assert expected in versions, f"version {expected} not in {source}"
 
 
-def test_version__changelog():
+def test__version__changelog():
     """Version in CHANGELOG."""
-    version_toml = PYPROJECT_D["tool"]["poetry"]["version"]
     path = Path.joinpath(ROOT, "CHANGELOG.rst")
     text = path.read_text(encoding="utf-8")
     regex = r"(.+)\s\(\d\d\d\d-\d\d-\d\d\)$"
-    version_log = vre.find1(regex, text, re.M)
-    assert version_toml == version_log, f"version in {path=}"
+    actual = vre.find1(regex, text, re.M)
+
+    expected = PYPROJECT_D["tool"]["poetry"]["version"]
+    assert actual == expected, f"version in {path=}"
 
 
-def test_last_modified_date():
+def test__version__docs():
+    """Version in docs/config.py."""
+    path = Path.joinpath(ROOT, "docs", "conf.py")
+    code = path.read_text(encoding="utf-8")
+    tree = ast.parse(code)
+
+    actual = ""
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "release":
+                    actual = ast.literal_eval(node.value)
+                    break
+
+    expected = PYPROJECT_D["tool"]["poetry"]["version"]
+    assert actual == expected, f"version in {path=}"
+
+
+def test__last_modified_date():
     """Last modified date in CHANGELOG."""
     path = Path.joinpath(ROOT, "CHANGELOG.rst")
     text = path.read_text(encoding="utf-8")
     regex = r".+\((\d\d\d\d-\d\d-\d\d)\)$"
-    date_log = vre.find1(regex, text, re.M)
+    actual = vre.find1(regex, text, re.M)
     files = vpath.get_files(ROOT, ext=".py")
-    last_modified = vdate.last_modified(files)
-    assert last_modified == date_log, "last modified file"
+    expected = vdate.last_modified(files)
+    assert actual == expected, "last modified file"

@@ -26,7 +26,7 @@ or install the package from github.com release
 
 .. code:: bash
 
-    pip install https://github.com/vladimirs-git/netbox3/archive/refs/tags/0.1.1.tar.gz
+    pip install https://github.com/vladimirs-git/netbox3/archive/refs/tags/0.1.2.tar.gz
 
 or install the package from github.com repository
 
