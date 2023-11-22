@@ -1,17 +1,17 @@
-"""Examples NbForager.grow_tree() several devices."""
+"""Examples NbForager.grow_tree() join devices."""
 from pprint import pprint
 
 from netbox3 import NbForager
 
 HOST = "demo.netbox.dev"
 TOKEN = "1a8424035853e078f9a65e06de9247249d26d5a1"
-nbf = NbForager(host=HOST, token=TOKEN, max_limit=10)
+nbf = NbForager(host=HOST, token=TOKEN)
 
-# Get all sites and only 3 devices from Netbox.
+# Get only 3 devices and sites from Netbox.
 # Note that the site in the device only contains basic data and
 # does not include tags, region and other extended data.
-nbf.dcim.sites.get()
 nbf.dcim.devices.get(max_limit=3)
+nbf.dcim.sites.get()
 pprint(nbf.root.dcim.devices)
 # {88: {'id': 88,
 #       'name': 'PP:B117',

@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-from netbox3.branch.nb_branch import NbBranch
 from netbox3.api.circuits import CircuitsAC
 from netbox3.api.core import CoreAC
 from netbox3.api.dcim import DcimAC
@@ -16,6 +15,7 @@ from netbox3.api.tenancy import TenancyAC
 from netbox3.api.users import UsersAC
 from netbox3.api.virtualization import VirtualizationAC
 from netbox3.api.wireless import WirelessAC
+from netbox3.branch.nb_branch import NbBranch
 from netbox3.types_ import ODLStr, ODDAny, DAny
 
 
@@ -115,7 +115,7 @@ class NbApi:
 
         :param dict default_get: Set default filtering parameters.
 
-        :param dict loners: Set :ref:`Filtering parameters by multiple values`.
+        :param dict loners: Set :ref:`Filtering parameters in an OR manner`.
 
         Application/model connectors:
 

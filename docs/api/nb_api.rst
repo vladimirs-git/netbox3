@@ -89,14 +89,17 @@ Parameter          Path                        Parameter             Path       
 
 ----------------------------------------------------------------------------------------
 
-Filtering parameters by multiple values
----------------------------------------
-The parameters in the table can only be requested as single values in the Netbox API `#14305`_.
-To implement functionality ``multiple values`` for the same parameter,
-NbApi splits ``loners`` parameters into multiple requests.
-I have not checked all endpoints, so the Netbox API may return improperly filtered objects.
-If you encounter this issue, please let me know so that I can fix it.
-As a workaround, you can set ``loners`` to change NbApi default behavior.
+Filtering parameters in an OR manner
+------------------------------------
+Netbox REST API processes filtering parameters in different manners. They can be
+processed using ``OR``, ``AND`` or ``loners``, where ``loners`` means only one parameter
+can be processed (processing only the last in the list). Viewed through the lens of
+Netbox3, ``loners`` is useless and could be processed using an ``OR`` operator.
+If you meet the ``loners`` parameters, the Netbox API may return improperly filtered
+objects `#14305`_. I have not checked all endpoints, so if you encounter this issue,
+please let me know so that I can fix it in NbApi. As a workaround, you can use
+``or_{parameter}`` in filtering parameters or set custom ``loners`` to change NbApi
+default behavior.
 
 ======================  ================================================================
 Path                    Parameter
@@ -114,3 +117,4 @@ extras/content-types    app_label, id, model
 
 .. _`Example of how to change loners`: https://github.com/vladimirs-git/netbox3/tree/main/examples/api/api__loners.py
 .. _`#14305`: https://github.com/netbox-community/netbox/discussions/14305
+.. _`Filtering parameters`: https://demo.netbox.dev/api/schema/swagger-ui/#/ipam/ipam_ip_addresses_list

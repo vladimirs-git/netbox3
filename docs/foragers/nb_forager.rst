@@ -29,3 +29,14 @@ Forager methods
     count,
     get,
   :class-doc-from: class
+
+----------------------------------------------------------------------------------------
+
+
+NbTree
+======
+
+todo documentation
+
+.. autoclass:: netbox3.NbTree
+  :members:

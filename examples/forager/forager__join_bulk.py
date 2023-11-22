@@ -12,8 +12,7 @@ HOST = "demo.netbox.dev"
 TOKEN = "1a8424035853e078f9a65e06de9247249d26d5a1"
 nbf = NbForager(host=HOST, token=TOKEN, threads=10)
 
-# Get the device object from Netbox.
-# Note that the site attribute only contains basic data and does not include tags.
+# Get the objects from Netbox using nested mode to requests all related objects.
 start = datetime.now()
 nbf.dcim.devices.get(include_nested=True)
 nbf.ipam.aggregates.get(include_nested=True)

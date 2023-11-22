@@ -106,7 +106,7 @@ class NbForager:
 
         :param dict default_get: Set default filtering parameters.
 
-        :param dict loners: Set :ref:`Filtering parameters by multiple values`.
+        :param dict loners: Set :ref:`Filtering parameters in an OR manner`.
 
         Data attributes:
 

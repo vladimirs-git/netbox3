@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "netbox3"
-version = "0.1.3"
+version = "0.1.4"
 description = "Python package to work with Netbox using REST API"
 authors = ["Vladimirs Prusakovs <vladimir.prusakovs@gmail.com>"]
 readme = "README.rst"
@@ -51,7 +51,7 @@ test = ["pytest"]
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/vladimirs-git/netbox3/issues"
-"Download URL" = "https://github.com/vladimirs-git/netbox3/archive/refs/tags/0.1.3.tar.gz"
+"Download URL" = "https://github.com/vladimirs-git/netbox3/archive/refs/tags/0.1.4.tar.gz"
 
 [tool.ruff]
 exclude = [

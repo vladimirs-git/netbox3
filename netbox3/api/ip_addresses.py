@@ -13,10 +13,23 @@ class IpAddressesC(Connector):
 
     # noinspection PyIncorrectDocstring
     def get(self, **kwargs) -> LDAny:  # pylint: disable=W0246
-        """Request data from Netbox using filtering parameters.
+        """Request data from Netbox using `Filtering parameters`_.
 
         Only ``NbApi.ipam.ip_addresses.get()`` is described in this documentation.
         Other models are implemented in a similar manner.
+
+        NbApi parameters:
+
+        :param max_limit: Maximum count of objects that need to be requested.
+            This is useful in development to prevent script blocking when
+            receiving only part of the requested data is acceptable.
+            Default is `0` no limit.
+        :type max_limit: int
+
+        :param or_{parameter}: List of parameters that need to be requested
+            in an ``OR`` manner, where ``{parameter}`` is the name of the
+            Netbox REST API `Filtering parameters`_.
+        :type or_{parameter}: list
 
         WEB UI Filter parameters:
 

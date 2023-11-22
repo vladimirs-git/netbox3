@@ -1,21 +1,30 @@
 netbox3
 ========
 
+Philosophy
+==========
+I am deeply engaged with the Netbox API. I have authored tons of Python scripts, each
+with a common purpose: retrieving objects from the Netbox database and joining them into
+a cohesive structure that mirrors the database itself. Retrieving and joining, retrieving
+and joining, with some additional processing. The primary goal of this project is to
+simplify the complexities inherent in these retrieval and joining operations.
 
-.. note::
+Viewed through the lens of Netbox3, the Netbox database resembles the root of a tree,
+with its branches intricately intertwined. The Netbox REST API provides data in a
+simplified form, akin to timber. A significant aspect of my scripts involves intertwining
+data to mirror the root structure. Netbox3 is designed to assist me in cultivating
+a data tree rooted in Netbox.
 
-   This project is under active development.
 
+----------------------------------------------------------------------------------------
 
 Overview
 ========
 
+**netbox3** comprises three Python tools designed for working with
+`Netbox`_ using the REST API. Checked with Python >= 3.8, Netbox >= v3.6.
 
-**netbox3** comprises three Python tools designed
-for working with `Netbox`_ using the REST API.
-Checked with Python >= 3.8, Netbox >= v3.6.
-
-- `NbApi`_ Request data from Netbox using filter parameters identical to those in the web interface filter form.
+- `NbApi`_ Request data from Netbox using filter parameters identical to those in the web interface filter form. Filter parameters using the ``OR`` operator.
 - `NbForager`_ Join Netbox objects within itself, represent them as a multidimensional dictionary.
 - `NbBranch`_ Extract the typed values from a Netbox object dictionary by using a chain of keys.
 
@@ -34,8 +43,55 @@ Install the package from pypi.org
     pip install netbox3
 
 
+or from github.com repository
+
+.. code:: bash
+
+    pip install git+https://github.com/vladimirs-git/netbox3
+
+
+NbForager demonstration.
+Join Netbox objects within self as a multidimensional dictionary.
+
+.. code:: python
+
+    from pprint import pprint
+
+    from netbox3 import NbForager
+
+    HOST = "demo.netbox.dev"
+    TOKEN = "1a8424035853e078f9a65e06de9247249d26d5a1"
+    nbf = NbForager(host=HOST, token=TOKEN)
+
+    # Get only 3 devices and sites from Netbox.
+    # Note that the site in the device only contains basic data and
+    # does not include tags, region and other extended data.
+    nbf.dcim.devices.get(max_limit=3)
+    nbf.dcim.sites.get()
+    pprint(nbf.root.dcim.devices)
+    # {88: {'id': 88,
+    #       'name': 'PP:B117',
+    #       'site': {'id': 21,
+    #      ...
+
+    # Join objects within self.
+    # Note that the device now includes site region and all other data.
+    tree = nbf.grow_tree()
+    pprint(tree.dcim.devices)
+    # {88: {'id': 88,
+    #       'name': 'PP:B117',
+    #       'site': {'id': 21,
+    #                'region': {'id': 40,
+    #                           'name': 'North Carolina',
+    #                           'url': 'https://demo.netbox.dev/api/dcim/regions/40/',
+    #      ...
+
+    # You can access any site attribute through a device.
+    print(tree.dcim.devices[88]["site"]["region"]["name"])  # North Carolina
+
+
 NbApi demonstration.
-Create, get, update and delete ip-address.
+Create, get, update and delete ip-addresses.
 
 .. code:: python
 
@@ -79,98 +135,6 @@ Create, get, update and delete ip-address.
         # Delete
         response = nb.ip_addresses.delete(id=id_)
         print(response)  # <Response [204]>
-
-
-NbForager demonstration.
-Join Netbox objects within self as a multidimensional dictionary.
-
-.. code:: python
-
-    from pprint import pprint
-
-    from netbox3 import NbForager
-
-    HOST = "demo.netbox.dev"
-    TOKEN = "1a8424035853e078f9a65e06de9247249d26d5a1"
-    nbf = NbForager(host=HOST, token=TOKEN, max_limit=10)
-
-    # Get all sites and only 3 devices from Netbox.
-    # Note that the site in the device only contains basic data and
-    # does not include tags, region and other extended data.
-    nbf.dcim.sites.get()
-    nbf.dcim.devices.get(max_limit=3)
-    pprint(nbf.root.dcim.devices)
-    # {88: {'id': 88,
-    #       'name': 'PP:B117',
-    #       'site': {'id': 21,
-    #      ...
-
-    # Join objects within self.
-    # Note that the device now includes site region and all other data.
-    tree = nbf.grow_tree()
-    pprint(tree.dcim.devices)
-    # {88: {'id': 88,
-    #       'name': 'PP:B117',
-    #       'site': {'id': 21,
-    #                'region': {'id': 40,
-    #                           'name': 'North Carolina',
-    #                           'url': 'https://demo.netbox.dev/api/dcim/regions/40/',
-    #      ...
-
-    # You can access any site attribute through a device.
-    print(tree.dcim.devices[88]["site"]["region"]["name"])  # North Carolina
-
-
-NbForager demonstration.
-Get data in threading mode.
-
-.. code:: python
-
-    import logging
-    from datetime import datetime
-
-    from netbox3 import NbApi
-
-    # Enable logging DEBUG mode
-    logging.getLogger().setLevel(logging.DEBUG)
-    logging.getLogger().addHandler(logging.StreamHandler())
-
-    HOST = "demo.netbox.dev"
-    TOKEN = "1a8424035853e078f9a65e06de9247249d26d5a1"
-
-    # Get data in threading mode.
-    start = datetime.now()
-    nb = NbApi(host=HOST, token=TOKEN, threads=10, interval=0.1, limit=200)
-    objects = nb.ip_addresses.get()
-    seconds = (datetime.now() - start).seconds
-    print([d["address"] for d in objects])
-    print(f"{len(objects)=} {seconds=}")
-    # DEBUG    https://demo.netbox.dev:443 "GET /api/ipam/addresses/?brief=1&limit=1 ...
-    # DEBUG    Starting new HTTPS connection (2): demo.netbox.dev:443
-    # DEBUG    Starting new HTTPS connection (3): demo.netbox.dev:443
-    # DEBUG    Starting new HTTPS connection (4): demo.netbox.dev:443
-    # DEBUG    Starting new HTTPS connection (5): demo.netbox.dev:443
-    # DEBUG    https://demo.netbox.dev:443 "GET /api/ipam/addresses/? ...
-    # DEBUG    https://demo.netbox.dev:443 "GET /api/ipam/addresses/? ...
-    # DEBUG    https://demo.netbox.dev:443 "GET /api/ipam/addresses/? ...
-    # DEBUG    https://demo.netbox.dev:443 "GET /api/ipam/addresses/? ...
-    # DEBUG    https://demo.netbox.dev:443 "GET /api/ipam/addresses/? ...
-    # len(objects)=4153 seconds=3
-
-
-    # Get data in loop mode, to compare time performance.
-    start = datetime.now()
-    nb = NbApi(host=HOST, token=TOKEN)
-    objects = nb.ip_addresses.get()
-    seconds = (datetime.now() - start).seconds
-    print(f"{len(objects)=} {seconds=}")
-    # DEBUG    : Starting new HTTPS connection (1): demo.netbox.dev:443
-    # DEBUG    https://demo.netbox.dev:443 "GET /api/ipam/prefixes/? ...
-    # DEBUG    https://demo.netbox.dev:443 "GET /api/ipam/prefixes/? ...
-    # DEBUG    https://demo.netbox.dev:443 "GET /api/ipam/prefixes/? ...
-    # DEBUG    https://demo.netbox.dev:443 "GET /api/ipam/prefixes/? ...
-    # DEBUG    https://demo.netbox.dev:443 "GET /api/ipam/prefixes/? ...
-    # len(objects)=4153 seconds=7
 
 
 ----------------------------------------------------------------------------------------

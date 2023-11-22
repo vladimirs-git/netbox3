@@ -82,7 +82,7 @@ class Connector(BaseC):
 
     # noinspection PyIncorrectDocstring
     def get(self, **kwargs) -> LDAny:
-        """Request data from Netbox using filtering parameters.
+        """Request data from Netbox using `Filtering parameters`_.
 
         The filtering parameters are identical to those in the web interface
         filter form. The value of each parameter can be either a single value
@@ -101,7 +101,19 @@ class Connector(BaseC):
         - Example https://github.com/vladimirs-git/netbox3/tree/main/examples,
         - Oficial documentation (if you're lucky).
 
-        :param kwargs: Filtering parameters.
+
+        :param max_limit: Maximum count of objects that need to be requested.
+            This is useful in development to prevent script blocking when
+            receiving only part of the requested data is acceptable.
+            Default is `0` no limit.
+        :type max_limit: int
+
+        :param or_{parameter}: List of parameters that need to be requested
+            in an ``OR`` manner, where ``{parameter}`` is the name of the
+            Netbox REST API `Filtering parameters`_.
+        :type or_{parameter}: list
+
+        :param kwargs: Netbox REST API `Filtering parameters`_.
         :type kwargs: dict
 
         :return: List of dictionaries containing Netbox objects.

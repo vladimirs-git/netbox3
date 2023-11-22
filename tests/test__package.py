@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 from vhelpers import vdate, vdict, vpath, vre
+
 ROOT = Path(__file__).parent.parent
 PYPROJECT_D = vdict.pyproject_d(ROOT)
 
@@ -12,8 +13,8 @@ def test__version__readme():
     """Version in README, URL."""
     expected = PYPROJECT_D["tool"]["poetry"]["version"]
     package = PYPROJECT_D["tool"]["poetry"]["name"].replace("_", "-")
-    readme = PYPROJECT_D["tool"]["poetry"]["readme"]
-    readme_text = Path.joinpath(ROOT, readme).read_text(encoding="utf-8")
+    # readme = PYPROJECT_D["tool"]["poetry"]["readme"]
+    # readme_text = Path.joinpath(ROOT, readme).read_text(encoding="utf-8")
     url_toml = "pyproject.toml project.urls.DownloadURL"
     url_text = PYPROJECT_D["tool"]["poetry"]["urls"]["Download URL"]
 

@@ -108,7 +108,7 @@ class BaseC:
 
         :param dict default_get: Set default filtering parameters.
 
-        :param dict loners: Set :ref:`Filtering parameters by multiple values`.
+        :param dict loners: Set :ref:`Filtering parameters in an OR manner`.
         """
         self.host: str = _init_host(**kwargs)
         self.token: str = str(kwargs.get("token") or "")
