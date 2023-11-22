@@ -15,7 +15,7 @@ from vhelpers import vstr
 from netbox3 import helpers as h
 from netbox3.nb_api import NbApi
 from netbox3.nb_tree import NbTree, missed_urls
-from netbox3.types_ import LDAny, DiDAny, LStr, DAny, LT2StrDAny
+from netbox3.types_ import LDAny, DiDAny, LStr, LT2StrDAny, DList, LDList
 
 
 class Forager:
@@ -64,6 +64,7 @@ class Forager:
         """
         return len(self.data)
 
+    # noinspection PyProtectedMember
     def get(self, include_nested: bool = True, **kwargs) -> None:
         """Retrieve data from the Netbox.
 
@@ -99,11 +100,12 @@ class Forager:
             for url in urls:
                 app, model, _ = h.split_url(url)
                 path = f"{app}/{model}/"
-                params_d: DAny = parse_qs(urlparse(url).query)
                 connector = self._get_connector(path)
-                # noinspection PyProtectedMember
-                results_ = connector._query_loop(path, params_d)  # pylint: disable=W0212
-                results.extend(results_)
+                params_d: DList = parse_qs(urlparse(url).query)
+                params_ld: LDList = connector._validate_params(**params_d)  # pylint: disable=W0212
+                for params_d in params_ld:
+                    results_ = connector._query_loop(path, params_d)  # pylint: disable=W0212
+                    results.extend(results_)
 
         self._save_results(results)
 

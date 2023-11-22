@@ -31,4 +31,4 @@ pprint(tree.dcim.devices)
 #      ...
 
 # You can access any site attribute through a device.
-print(tree.dcim.devices[88]["site"]["region"]["name"])  # North Carolina
+print(list(tree.dcim.devices.values())[0]["site"]["region"]["name"])  # North Carolina
