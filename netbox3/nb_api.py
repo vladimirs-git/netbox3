@@ -148,7 +148,7 @@ class NbApi:
             **kwargs,
         }
 
-        # applications
+        # application connectors
         self.circuits = CircuitsAC(**kwargs)
         self.core = CoreAC(**kwargs)
         self.dcim = DcimAC(**kwargs)
@@ -161,7 +161,7 @@ class NbApi:
         self.virtualization = VirtualizationAC(**kwargs)
         self.wireless = WirelessAC(**kwargs)
 
-        # models
+        # model connectors
         # circuits
         self.circuit_terminations = self.circuits.circuit_terminations
         self.circuit_types = self.circuits.circuit_types
