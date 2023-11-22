@@ -366,27 +366,28 @@ def slice_params_d(url: str, max_len: int, key: str, params_d: DList) -> LDList:
     return params_sliced
 
 
-def slice_params_ld(url: str, max_len: int, keys: LStr, params: LDList) -> LDList:
+def slice_params_ld(url: str, max_len: int, keys: LStr, params_ld: LDList) -> LDList:
     """Split params into different lists if slicing is required.
 
     :param url: URL that need to split.
     :param max_len: Maximum length of URL.
     :param keys: The keys of the parameters that could be sliced.
-    :param params: A list of parameters.
+    :param params_ld: A list of parameters.
 
     :return: A list of sliced parameters.
     """
-    params_ld: LDList = []
-    for params_d in params:
+    params_ld_: LDList = []
+
+    for params_d in params_ld:
         # no need slice
         key_of_long_value = get_key_of_longest_value(params_d)
         if not key_of_long_value:
-            params_ld.append(params_d)
+            params_ld_.append(params_d)
             continue
 
         # no need slice
         if key_of_long_value not in keys:
-            params_ld.append(params_d)
+            params_ld_.append(params_d)
             continue
 
         # need slice
@@ -396,8 +397,12 @@ def slice_params_ld(url: str, max_len: int, keys: LStr, params: LDList) -> LDLis
             key=key_of_long_value,
             params_d=params_d,
         )
-        params_ld.extend(params_sliced)
-    return params_ld
+        params_ld_.extend(params_sliced)
+
+    if not params_ld_:
+        params_ld_ = [{}]
+
+    return params_ld_
 
 
 def _validate_values(values: Any) -> LValue:

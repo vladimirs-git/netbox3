@@ -80,12 +80,13 @@ class Forager:
 
         :return: None. Update self object.
         """
+        # Query main data
         nb_objects: LDAny = self._get_root_data_from_netbox(**kwargs)
         if not include_nested:
             return
-        urls = self._collect_nested_urls(nb_objects)
+        urls: LStr = self._collect_nested_urls(nb_objects)
 
-        # Query nested data from the Netbox
+        # Query nested data
         # threads
         results: LDAny = []
         if self.threads > 1:
@@ -103,6 +104,15 @@ class Forager:
                 connector = self._get_connector(path)
                 params_d: DList = parse_qs(urlparse(url).query)
                 params_ld: LDList = connector._validate_params(**params_d)  # pylint: disable=W0212
+
+                # slice params
+                params_ld = h.slice_params_ld(
+                    url=url,
+                    max_len=connector.url_length,
+                    keys=connector._slices,  # pylint: disable=W0212
+                    params_ld=params_ld,
+                )
+
                 for params_d in params_ld:
                     results_ = connector._query_loop(path, params_d)  # pylint: disable=W0212
                     results.extend(results_)
@@ -180,7 +190,7 @@ class Forager:
                 url=connector.url,
                 max_len=connector.url_length,
                 keys=connector._slices,  # pylint: disable=W0212
-                params=[params_d],
+                params_ld=[params_d],
             )
             for params_d in params_ld:
                 path_params.append((path, params_d))

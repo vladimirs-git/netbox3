@@ -4,6 +4,8 @@
 from typing import Any, Tuple
 
 import pytest
+import requests_mock
+from requests_mock import Mocker
 
 from netbox3.nb_forager import NbForager
 from netbox3.types_ import LT2StrDAny
@@ -114,3 +116,36 @@ def test__get_root_data(nbf, path, expected: Any):
     else:
         with pytest.raises(expected):
             nbf.ipam.vrfs._get_connector(path)
+
+
+@pytest.fixture
+def mock_requests_vrfs():
+    """Mock Session."""
+    rt1 = {"id": 1, "name": "65000:1", "url": "/ipam/route-targets/1"}
+    rt2 = {"id": 2, "name": "65000:2", "url": "/ipam/route-targets/2"}
+    vrf1 = {"id": 1, "name": "VRF1", "url": "ipam/vrfs/1", "import_targets": [rt1, rt2]}
+    with requests_mock.Mocker() as mock:
+        mock.get(
+            "https://netbox/api/ipam/vrfs/?limit=1000&offset=0",
+            json={"results": [vrf1]},
+        )
+        mock.get(
+            "https://netbox/api/ipam/route-targets/?id=1&limit=1000&offset=0",
+            json={"results": [rt1]},
+        )
+        mock.get(
+            "https://netbox/api/ipam/route-targets/?id=2&limit=1000&offset=0",
+            json={"results": [rt2]},
+        )
+        yield mock
+
+
+@pytest.mark.skip(reason="Has blocking effect")
+def test__get(mock_requests_vrfs: Mocker):  # pylint: disable=unused-argument
+    """Forager.get().
+
+    url_length=1 is required to check slice params and to
+    mock 3 requests: ipam/vrfs, ipam/route-targets/?id=1, ipam/route-targets/?id=2.
+    """
+    nbf = NbForager(host="netbox", url_length=1, threads=2)
+    nbf.ipam.vrfs.get()

@@ -169,22 +169,22 @@ class BaseC:
         params_d = vparam.to_dict(params)
         return self._query_loop(path, params_d)
 
-    def _query_params_ld(self, params: LDList) -> LDAny:
+    def _query_params_ld(self, params_ld: LDList) -> LDAny:
         """Retrieve data from the Netbox.
 
-        :param params: Parameters to request from the Netbox.
+        :param params_ld: Parameters to request from the Netbox.
 
         :return: A list of the Netbox objects.
         """
         self._results = []
-        params_ld: LDList = h.slice_params_ld(
+
+        # slice params
+        params_ld = h.slice_params_ld(
             url=self.url,
             max_len=self.url_length,
             keys=self._slices,
-            params=params,
+            params_ld=params_ld,
         )
-        if not params_ld:
-            params_ld = [{}]
 
         # threads
         if self.threads > 1:

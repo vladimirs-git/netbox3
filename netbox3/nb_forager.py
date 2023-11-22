@@ -1,4 +1,4 @@
-# pylint: disable=R0801,R0902,R0913
+# pylint: disable=R0801,R0902,R0913,R0914,R0915
 
 """NbForager."""
 
@@ -37,7 +37,7 @@ class NbForager:
     - Read/write objects from/to the cache pickle file,
     """
 
-    def __init__(  # pylint: disable=R0914
+    def __init__(
         self,
         host: str,
         token: str = "",

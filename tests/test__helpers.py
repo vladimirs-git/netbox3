@@ -250,7 +250,7 @@ def test__slice_params_d(url, max_len, key, params_d, expected):
 
 
 @pytest.mark.parametrize("url, max_len, keys, params, expected", [
-    ("https://domain.com", 2047, ["address"], [], []),
+    ("https://domain.com", 2047, ["address"], [], [{}]),
     ("https://domain.com", 2047, ["address"], [{}], [{}]),  # no need slice
     ("https://domain.com", 50, [], [{"address": [IP1, IP2], "family": [4]}],
      [{"address": [IP1, IP2], "family": [4]}]),  # need slice
@@ -262,7 +262,7 @@ def test__slice_params_d(url, max_len, key, params_d, expected):
 ])
 def test__slice_params_ld(url, max_len, keys, params, expected):
     """helpers.slice_params_ld()."""
-    actual = h.slice_params_ld(url=url, max_len=max_len, keys=keys, params=params)
+    actual = h.slice_params_ld(url=url, max_len=max_len, keys=keys, params_ld=params)
     assert actual == expected
 
 
