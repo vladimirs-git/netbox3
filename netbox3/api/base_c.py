@@ -88,10 +88,8 @@ class BaseC:
             if the URL length exceeds maximum length due to a long list of
             GET parameters. Default is `2047`.
 
-        :param int threads: Threads count.
-            `1` - Loop mode.
-            `2 or higher` -  Threading mode.
-            Default is `1`.
+        :param int threads: Threads count. <=1 is loop mode, >=2 is threading mode.
+            Default id `1`.
 
         :param float interval: Wait this time between requests (seconds).
             Default is `0`. Useful to optimize session spikes and achieve

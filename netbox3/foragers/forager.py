@@ -65,14 +65,14 @@ class Forager:
         return len(self.data)
 
     # noinspection PyProtectedMember
-    def get(self, include_nested: bool = True, **kwargs) -> None:
+    def get(self, include_nested: bool = False, **kwargs) -> None:
         """Retrieve data from the Netbox.
 
         Request data based on the filter parameters (kwargs described in the
         NbApi connector) and save to the NbForager.root.
 
         :param include_nested: `True` - Request base and nested objects,
-            `False` - Request only base objects. Default id `True`
+            `False` - Request only base objects. Default id `False`
         :type include_nested: bool
 
         :param kwargs: Filtering parameters.

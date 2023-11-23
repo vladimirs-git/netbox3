@@ -134,6 +134,4 @@ dmypy.json
 **/*.log
 tmp/
 temp/
-data.yml
 _notes/
-_examples/

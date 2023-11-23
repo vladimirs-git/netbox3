@@ -1,6 +1,7 @@
 # pylint: disable=W0212,R0801,R0915,W0621
 
 """Unittests foragers."""
+import inspect
 from pathlib import Path
 from unittest.mock import Mock
 from unittest.mock import patch, mock_open
@@ -52,6 +53,27 @@ def test__app_model(nbf: NbForager):
 
 def test__init(nbf: NbForager):
     """NbForager.__init__()."""
+    actual = list(inspect.signature(nbf.__init__).parameters)
+    expected = [
+        "host",
+        "token",
+        "scheme",
+        "port",
+        "verify",
+        "limit",
+        "url_length",
+        "threads",
+        "interval",
+        "timeout",
+        "max_retries",
+        "sleep",
+        "default_get",
+        "loners",
+        "cache",
+        "kwargs",
+    ]
+    assert actual == expected
+
     assert nbf.api.host == "netbox"
     assert nbf.api.ipam.aggregates.host == "netbox"
     assert nbf.api.ipam.aggregates.token == ""

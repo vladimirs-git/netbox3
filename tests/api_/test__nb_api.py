@@ -1,6 +1,7 @@
 # pylint: disable=W0212,R0801,W0621
 
 """Unittests nb_pai.py."""
+import inspect
 
 import pytest
 import requests_mock
@@ -45,6 +46,29 @@ def test__app_model(api: NbApi):
             actual = model_o.__class__.__name__
             expected = "".join([f"{s.capitalize()}" for s in model.split("_")]) + "C"
             assert actual == expected
+
+
+def test__init__(api: NbApi):
+    """NbApi.__init__()."""
+    actual = list(inspect.signature(api.__init__).parameters)
+    expected = [
+        "host",
+        "token",
+        "scheme",
+        "port",
+        "verify",
+        "limit",
+        "url_length",
+        "threads",
+        "interval",
+        "timeout",
+        "max_retries",
+        "sleep",
+        "default_get",
+        "loners",
+        "kwargs",
+    ]
+    assert actual == expected
 
 
 @pytest.mark.parametrize("params, expected", [

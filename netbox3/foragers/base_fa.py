@@ -33,12 +33,15 @@ class BaseAF:
         """
         return getattr(self.root, self.app).count()
 
-    def get(self, include_nested: bool = True, **kwargs) -> None:
+    def get(self, include_nested: bool = False, **kwargs) -> None:
         """Get all objects from the Netbox, add objects to root.
 
         :param include_nested: True - Request base and nested objects,
-            False - Request only base objects.
+            False - Request only base objects. Default is `False`.
+        :type include_nested: bool
+
         :param kwargs: Filtering parameters.
+        :type kwargs: dict
 
         :return: None. Update self object.
         """
