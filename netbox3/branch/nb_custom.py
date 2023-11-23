@@ -12,6 +12,34 @@ from netbox3.types_ import SStr, T2Str
 class NbCustom(NbValue):
     """Extracts a value from a Netbox object using a chain of keys."""
 
+    def name(self) -> str:
+        """dcim/devices/name, dcim/vlans/name.
+
+        :return: Name value.
+
+        :raise NbBranchError: if object has no name.
+        """
+        strict_actual = self.strict
+        self.strict = True
+        name = super().name()
+        self.strict = strict_actual
+        return name
+
+    def platform_slug(self) -> str:
+        """dcim/devices/platform/slug.
+
+        :return: Platform slug.
+
+        :raise NbBranchError: if device has no: hostname, version platform.
+        """
+        strict_actual = self.strict
+        self.strict = True
+        _ = self.is_dcim("devices")
+        _ = self.primary_ip4()
+        device_type = super().platform_slug()
+        self.strict = strict_actual
+        return device_type
+
     # ========================== custom_fields ===========================
 
     def cf_cloud_account(self) -> str:

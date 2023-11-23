@@ -1,4 +1,6 @@
 """Params base.py."""
+from copy import deepcopy
+
 from netbox3.exceptions import NbBranchError
 
 PREFIX = "10.0.0.0/24"
@@ -286,6 +288,36 @@ URL = [
     ({"url": ""}, False, ""),
     (None, True, NbBranchError),
     (None, False, ""),
+]
+
+# test__platform_slug
+PLATFORM_D = {
+    "url": "/api/dcim/devices/",
+    "primary_ip4": {"address": "10.0.0.1/24"},
+    "platform": {"slug": "platform1"},
+}
+PLATFORM_D_WO_URL = deepcopy(PLATFORM_D)
+del PLATFORM_D_WO_URL["url"]
+PLATFORM_D_W_INVALID_ADDRESS = deepcopy(PLATFORM_D)
+PLATFORM_D_W_INVALID_ADDRESS["primary_ip4"]["address"] = "typo"
+PLATFORM_D_WO_ADDRESS = deepcopy(PLATFORM_D)
+del PLATFORM_D_WO_ADDRESS["primary_ip4"]["address"]
+PLATFORM_D_WO_PRIMARY_IP4 = deepcopy(PLATFORM_D)
+del PLATFORM_D_WO_PRIMARY_IP4["primary_ip4"]
+PLATFORM_D_WO_SLUG = deepcopy(PLATFORM_D)
+del PLATFORM_D_WO_SLUG["platform"]["slug"]
+PLATFORM_D_WO_PLATFORM = deepcopy(PLATFORM_D)
+del PLATFORM_D_WO_PLATFORM["platform"]
+
+PLATFORM_SLUG = [
+    (PLATFORM_D, "platform1"),
+    ({}, NbBranchError),
+    (PLATFORM_D_WO_URL, NbBranchError),
+    (PLATFORM_D_W_INVALID_ADDRESS, NbBranchError),
+    (PLATFORM_D_WO_ADDRESS, NbBranchError),
+    (PLATFORM_D_WO_PRIMARY_IP4, NbBranchError),
+    (PLATFORM_D_WO_SLUG, NbBranchError),
+    (PLATFORM_D_WO_PLATFORM, NbBranchError),
 ]
 
 # test__hosts_in_cf_firewalls

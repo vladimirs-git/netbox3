@@ -6,7 +6,36 @@ from typing import Any
 import pytest
 
 from netbox3.branch.nb_custom import NbCustom
+from netbox3.exceptions import NbBranchError
 from tests import params__nb_branch as p
+
+
+@pytest.mark.parametrize("data, expected", [
+    ({}, NbBranchError),
+    ({"name": ""}, NbBranchError),
+    ({"name": "NAME1"}, "NAME1"),
+])
+def test__name(data, expected: Any):
+    """NbCustom.name()."""
+    branch = NbCustom(data=data)
+    if isinstance(expected, str):
+        actual = branch.name()
+        assert actual == expected
+    else:
+        with pytest.raises(expected):
+            branch.name()
+
+
+@pytest.mark.parametrize("data, expected", p.PLATFORM_SLUG)
+def test__platform_slug(data, expected: Any):
+    """NbCustom.platform_slug()."""
+    branch = NbCustom(data=data)
+    if isinstance(expected, str):
+        actual = branch.platform_slug()
+        assert actual == expected
+    else:
+        with pytest.raises(expected):
+            branch.platform_slug()
 
 
 @pytest.mark.parametrize("data, strict, expected", p.HOSTS_IN_CF_FIREWALLS)
