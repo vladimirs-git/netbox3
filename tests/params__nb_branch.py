@@ -202,10 +202,26 @@ PREFIX_ = [
     (None, False, ""),
 ]
 
-# test__primary_ip4_address
+# test__primary_ip4
 PRIMARY_IP4 = [
     ({"primary_ip4": {"address": IP32}}, True, IP32),
     ({"primary_ip4": {"address": IP32}}, False, IP32),
+    ({"primary_ip4": {"address": IP0}}, True, IP0),
+    ({"primary_ip4": {"address": IP0}}, False, IP0),
+    ({"primary_ip4": {"address": f"{IP0}_32"}}, True, NbBranchError),
+    ({"primary_ip4": {"address": f"{IP0}_32"}}, False, f"{IP0}_32"),
+    ({"primary_ip4": {"address": ""}}, True, NbBranchError),
+    ({"primary_ip4": {"address": ""}}, False, ""),
+    ({"primary_ip4": {"address": None}}, True, NbBranchError),
+    ({"primary_ip4": {"address": None}}, False, ""),
+    ({"primary_ip4": None}, True, NbBranchError),
+    ({"primary_ip4": None}, False, ""),
+]
+
+# test__primary_ip
+PRIMARY_IP = [
+    ({"primary_ip4": {"address": IP32}}, True, IP0),
+    ({"primary_ip4": {"address": IP32}}, False, IP0),
     ({"primary_ip4": {"address": IP0}}, True, IP0),
     ({"primary_ip4": {"address": IP0}}, False, IP0),
     ({"primary_ip4": {"address": f"{IP0}_32"}}, True, NbBranchError),

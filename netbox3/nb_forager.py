@@ -95,9 +95,8 @@ class NbForager:
 
         :param int timeout: Session timeout (seconds). Default is `60`.
 
-        :param int max_retries: Retries the request multiple times if
-            the Netbox API does not respond or responds with a timeout.
-            Default is `0`.
+        :param int max_retries: Retries the request multiple times if the Netbox API
+            does not respond or responds with a timeout. Default is `0`.
 
         :param int sleep: Interval (seconds) before the next retry after
             session timeout reached. Default is `10`.

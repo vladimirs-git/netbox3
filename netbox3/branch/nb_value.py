@@ -153,6 +153,17 @@ class NbValue(NbBranch):
                 raise NbBranchError(f"primary_ip4/address A.B.C.D expected in {self.data}.")
         return primary_ip4
 
+    def primary_ip(self) -> str:
+        """dcim/devices/primary_ip4/address.
+
+        :return: primary ip address without mask.
+
+        :raise NbBranchError: if strict=True and device has no primary_ip4 address.
+        """
+        ip4 = self.primary_ip4()
+        ip = ip4.split("/", maxsplit=1)[0]
+        return ip
+
     def role_slug(self) -> str:
         """ipam/prefixes/role/slug.
 

@@ -84,8 +84,8 @@ def test__prefix(data: dict, strict: bool, expected: Any):
 
 
 @pytest.mark.parametrize("data, strict, expected", p.PRIMARY_IP4)
-def test__primary_ip4_address(data: dict, strict: bool, expected: Any):
-    """NbValue.primary_ip4_address()."""
+def test__primary_ip4(data: dict, strict: bool, expected: Any):
+    """NbValue.primary_ip4()."""
     branch = NbValue(data=data, strict=strict)
     if isinstance(expected, str):
         actual = branch.primary_ip4()
@@ -93,6 +93,18 @@ def test__primary_ip4_address(data: dict, strict: bool, expected: Any):
     else:
         with pytest.raises(expected):
             branch.primary_ip4()
+
+
+@pytest.mark.parametrize("data, strict, expected", p.PRIMARY_IP)
+def test__primary_ip(data: dict, strict: bool, expected: Any):
+    """NbValue.primary_ip()."""
+    branch = NbValue(data=data, strict=strict)
+    if isinstance(expected, str):
+        actual = branch.primary_ip()
+        assert actual == expected
+    else:
+        with pytest.raises(expected):
+            branch.primary_ip()
 
 
 @pytest.mark.parametrize("data, strict, upper, expected", p.SITE_NAME)
