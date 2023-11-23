@@ -1,4 +1,5 @@
 """Create documentation sections."""
+import logging
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -22,7 +23,7 @@ class Methods(BaseModel):
     f_methods: LStr = Field(description="Forager method names")
 
 
-def connectors() -> None:
+def create_connectors() -> None:
     """Create api/{class_name}.rst files for connectors."""
     data: DAny = _get_app_models()
     for app, model_lo in data.items():
@@ -39,9 +40,10 @@ def connectors() -> None:
         text = "\n".join(lines)
         path = Path("api", f"{connector}.rst")
         path.write_text(text)
+        logging.info("created %s", path)
 
 
-def foragers() -> None:
+def create_foragers() -> None:
     """Create foragers/{class_name}.rst files for foragers."""
     data: DAny = _get_app_models()
     data = {k: v for k, v in data.items() if k in dir(NBF)}
@@ -59,6 +61,7 @@ def foragers() -> None:
         text = "\n".join(lines)
         path = Path("foragers", f"{forager}.rst")
         path.write_text(text)
+        logging.info("created %s", path)
 
 
 def _get_app_models() -> DAny:
@@ -104,4 +107,8 @@ def _get_app_models() -> DAny:
 
 
 if __name__ == "__main__":
-    foragers()
+    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().addHandler(logging.StreamHandler())
+
+    create_connectors()
+    create_foragers()
