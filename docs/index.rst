@@ -30,18 +30,18 @@ Overview
 
 This project on `GitHub`_.
 
+
 ----------------------------------------------------------------------------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
     NbApi <api/nb_api.rst>
     NbForager <foragers/nb_forager.rst>
     NbBranch <branch/nb_branch.rst>
-    NbTree
-
-:ref:`Examples`
+    NbValue <branch/nb_value.rst>
+    Examples <examples.rst>
 
 
 ----------------------------------------------------------------------------------------

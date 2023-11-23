@@ -98,7 +98,7 @@ class NbApi:
         :param int threads: Threads count. <=1 is loop mode, >=2 is threading mode.
             Default id `1`.
 
-        :param float interval: Wait this time between requests (seconds).
+        :param float interval: Wait this time between the threading requests (seconds).
             Default is `0`. Useful to optimize session spikes and achieve
             script stability in Docker with limited resources.
 
