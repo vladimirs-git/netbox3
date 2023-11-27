@@ -10,13 +10,14 @@ from netbox3.nb_tree import NbTree
 class TenancyAF(BaseAF):
     """Tenancy Forager."""
 
-    def __init__(self, root: NbTree, api: NbApi):
+    def __init__(self, api: NbApi, root: NbTree, tree: NbTree):
         """Init TenancyAF.
 
-        :param root: NbTree object where data from Netbox needs to be saved.
         :param api: NbApi object, connector to Netbox API.
+        :param root: NbTree object where raw data from Netbox needs to be saved.
+        :param tree: NbTree object where transformed data from Netbox needs to be saved.
         """
-        super().__init__(root, api)
+        super().__init__(api, root, tree)
         self.contact_assignments = self.ContactAssignmentsF(self)
         self.contact_groups = self.ContactGroupsF(self)
         self.contact_roles = self.ContactRolesF(self)

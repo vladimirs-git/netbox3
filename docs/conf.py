@@ -10,7 +10,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 project = "netbox3"
 copyright = "2023, Vladimirs Prusakovs"
 author = "Vladimirs Prusakovs"
-release = "0.1.7"
+release = "0.1.8"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

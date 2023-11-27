@@ -1,6 +1,11 @@
 netbox3
 ========
 
+.. note::
+
+   THIS PROJECT IS UNDER ACTIVE DEVELOPMENT.
+
+
 Philosophy
 ==========
 I am deeply engaged with the Netbox API. I have authored tons of Python scripts, each

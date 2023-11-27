@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "netbox3"
-version = "0.1.7"
+version = "0.1.8"
 description = "Python package to work with Netbox using REST API"
 authors = ["Vladimirs Prusakovs <vladimir.prusakovs@gmail.com>"]
 readme = "README.rst"
@@ -18,6 +18,7 @@ classifiers = [
 ]
 [tool.poetry.dependencies]
 python = "^3.8"
+ciscoconfparse = "^1.9"
 pydantic = "^2"
 requests = "^2"
 tomli = "2.0.1"
@@ -51,7 +52,11 @@ test = ["pytest"]
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/vladimirs-git/netbox3/issues"
-"Download URL" = "https://github.com/vladimirs-git/netbox3/archive/refs/tags/0.1.7.tar.gz"
+"Download URL" = "https://github.com/vladimirs-git/netbox3/archive/refs/tags/0.1.8.tar.gz"
+
+
+[tool.mypy]
+python_version = "3.8"
 
 [tool.ruff]
 exclude = [

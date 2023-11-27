@@ -10,14 +10,15 @@ from netbox3.types_ import LStr
 class BaseAF:
     """Base for Application Foragers."""
 
-    def __init__(self, root: NbTree, api: NbApi):
+    def __init__(self, api: NbApi, root: NbTree, tree: NbTree):
         """Init BaseAF.
 
         :param root: Dictionary where data from Netbox needs to be saved.
         """
         self.api = api
+        self.root: NbTree = root
+        self.tree: NbTree = tree
         self.app: str = h.attr_name(self)
-        self.root = root
         self.connector: ConnectorA = getattr(api, self.app)  # connector to application
 
     def __repr__(self) -> str:
@@ -41,7 +42,6 @@ class BaseAF:
         :type include_nested: bool
 
         :param kwargs: Filtering parameters.
-        :type kwargs: dict
 
         :return: None. Update self object.
         """

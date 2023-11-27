@@ -7,9 +7,10 @@ from __future__ import annotations
 import copy
 import logging
 from datetime import datetime
+from operator import itemgetter
 from pathlib import Path
 
-from vhelpers import vstr
+from vhelpers import vstr, vlist
 
 from netbox3 import nb_tree
 from netbox3.branch.nb_value import NbValue
@@ -18,6 +19,7 @@ from netbox3.foragers.core import CoreAF
 from netbox3.foragers.dcim import DcimAF
 from netbox3.foragers.extras import ExtrasAF
 from netbox3.foragers.ipam import IpamAF
+from netbox3.foragers.ipv4 import IPv4
 from netbox3.foragers.tenancy import TenancyAF
 from netbox3.foragers.users import UsersAF
 from netbox3.foragers.virtualization import VirtualizationAF
@@ -25,8 +27,8 @@ from netbox3.foragers.wireless import WirelessAF
 from netbox3.messages import Messages
 from netbox3.nb_api import NbApi
 from netbox3.nb_cache import NbCache
-from netbox3.nb_tree import NbTree, insert_tree
-from netbox3.types_ import LStr, DAny, DiDAny, ODLStr, ODDAny
+from netbox3.nb_tree import NbTree
+from netbox3.types_ import LStr, DAny, DiDAny, ODLStr, ODDAny, LDAny, DiLDAny, LInt
 
 
 class NbForager:
@@ -152,129 +154,15 @@ class NbForager:
         self.msgs = Messages(name=self.api.host)
 
         # application foragers
-        self.circuits = CircuitsAF(self.root, self.api)
-        self.core = CoreAF(self.root, self.api)
-        self.dcim = DcimAF(self.root, self.api)
-        self.extras = ExtrasAF(self.root, self.api)
-        self.ipam = IpamAF(self.root, self.api)
-        self.tenancy = TenancyAF(self.root, self.api)
-        self.users = UsersAF(self.root, self.api)
-        self.virtualization = VirtualizationAF(self.root, self.api)
-        self.wireless = WirelessAF(self.root, self.api)
-
-        # model connectors
-        # circuits
-        self.circuit_terminations = self.circuits.circuit_terminations
-        self.circuit_types = self.circuits.circuit_types
-        self.circuits_ = self.circuits.circuits  # overlap with self.circuits
-        self.provider_accounts = self.circuits.provider_accounts
-        self.provider_networks = self.circuits.provider_networks
-        self.providers = self.circuits.providers
-        # core
-        self.data_files = self.core.data_files
-        self.data_sources = self.core.data_sources
-        self.jobs = self.core.jobs
-        # dcim
-        self.cable_terminations = self.dcim.cable_terminations
-        self.cables = self.dcim.cables
-        # connected_device, is not model
-        self.console_port_templates = self.dcim.console_port_templates
-        self.console_ports = self.dcim.console_ports
-        self.console_server_port_templates = self.dcim.console_server_port_templates
-        self.console_server_ports = self.dcim.console_server_ports
-        self.device_bay_templates = self.dcim.device_bay_templates
-        self.device_bays = self.dcim.device_bays
-        self.device_roles = self.dcim.device_roles
-        self.device_types = self.dcim.device_types
-        self.devices = self.dcim.devices
-        self.front_port_templates = self.dcim.front_port_templates
-        self.front_ports = self.dcim.front_ports
-        self.interface_templates = self.dcim.interface_templates
-        self.interfaces = self.dcim.interfaces  # overlap with virtualization.interfaces
-        self.inventory_item_roles = self.dcim.inventory_item_roles
-        self.inventory_item_templates = self.dcim.inventory_item_templates
-        self.inventory_items = self.dcim.inventory_items
-        self.locations = self.dcim.locations
-        self.manufacturers = self.dcim.manufacturers
-        self.module_bay_templates = self.dcim.module_bay_templates
-        self.module_bays = self.dcim.module_bays
-        self.module_types = self.dcim.module_types
-        self.modules = self.dcim.modules
-        self.platforms = self.dcim.platforms
-        self.power_feeds = self.dcim.power_feeds
-        self.power_outlet_templates = self.dcim.power_outlet_templates
-        self.power_outlets = self.dcim.power_outlets
-        self.power_panels = self.dcim.power_panels
-        self.power_port_templates = self.dcim.power_port_templates
-        self.power_ports = self.dcim.power_ports
-        self.rack_reservations = self.dcim.rack_reservations
-        self.rack_roles = self.dcim.rack_roles
-        self.racks = self.dcim.racks
-        self.rear_port_templates = self.dcim.rear_port_templates
-        self.rear_ports = self.dcim.rear_ports
-        self.regions = self.dcim.regions
-        self.site_groups = self.dcim.site_groups
-        self.sites = self.dcim.sites
-        self.virtual_chassis = self.dcim.virtual_chassis
-        self.virtual_device_contexts = self.dcim.virtual_device_contexts
-        # extras
-        self.bookmarks = self.extras.bookmarks
-        self.config_contexts = self.extras.config_contexts
-        self.config_templates = self.extras.config_templates
-        self.content_types = self.extras.content_types
-        self.custom_field_choice_sets = self.extras.custom_field_choice_sets
-        self.custom_fields = self.extras.custom_fields
-        self.custom_links = self.extras.custom_links
-        self.export_templates = self.extras.export_templates
-        self.image_attachments = self.extras.image_attachments
-        self.journal_entries = self.extras.journal_entries
-        self.object_changes = self.extras.object_changes
-        self.reports = self.extras.reports
-        self.saved_filters = self.extras.saved_filters
-        self.scripts = self.extras.scripts
-        self.tags = self.extras.tags
-        self.webhooks = self.extras.webhooks
-        # ipam
-        self.aggregates = self.ipam.aggregates
-        self.asn_ranges = self.ipam.asn_ranges
-        self.asns = self.ipam.asns
-        self.fhrp_group_assignments = self.ipam.fhrp_group_assignments
-        self.fhrp_groups = self.ipam.fhrp_groups
-        self.ip_addresses = self.ipam.ip_addresses
-        self.ip_ranges = self.ipam.ip_ranges
-        self.l2vpn_terminations = self.ipam.l2vpn_terminations
-        self.l2vpns = self.ipam.l2vpns
-        self.prefixes = self.ipam.prefixes
-        self.rirs = self.ipam.rirs
-        self.roles = self.ipam.roles
-        self.route_targets = self.ipam.route_targets
-        self.service_templates = self.ipam.service_templates
-        self.services = self.ipam.services
-        self.vlan_groups = self.ipam.vlan_groups
-        self.vlans = self.ipam.vlans
-        self.vrfs = self.ipam.vrfs
-        # tenancy
-        self.contact_assignments = self.tenancy.contact_assignments
-        self.contact_groups = self.tenancy.contact_groups
-        self.contact_roles = self.tenancy.contact_roles
-        self.contacts = self.tenancy.contacts
-        self.tenant_groups = self.tenancy.tenant_groups
-        self.tenants = self.tenancy.tenants
-        # users
-        self.groups = self.users.groups
-        self.permissions = self.users.permissions
-        self.tokens = self.users.tokens
-        self.users_ = self.users.users  # overlap with self.users
-        # virtualization
-        self.cluster_groups = self.virtualization.cluster_groups
-        self.cluster_types = self.virtualization.cluster_types
-        self.clusters = self.virtualization.clusters
-        self.interfaces_ = self.virtualization.interfaces  # overlap with dcim.interfaces
-        self.virtual_machines = self.virtualization.virtual_machines
-        # wireless
-        self.wireless_lan_groups = self.wireless.wireless_lan_groups
-        self.wireless_lans = self.wireless.wireless_lans
-        self.wireless_links = self.wireless.wireless_links
+        self.circuits = CircuitsAF(self.api, self.root, self.tree)
+        self.core = CoreAF(self.api, self.root, self.tree)
+        self.dcim = DcimAF(self.api, self.root, self.tree)
+        self.extras = ExtrasAF(self.api, self.root, self.tree)
+        self.ipam = IpamAF(self.api, self.root, self.tree)
+        self.tenancy = TenancyAF(self.api, self.root, self.tree)
+        self.users = UsersAF(self.api, self.root, self.tree)
+        self.virtualization = VirtualizationAF(self.api, self.root, self.tree)
+        self.wireless = WirelessAF(self.api, self.root, self.tree)
 
     def __repr__(self) -> str:
         """__repr__."""
@@ -292,7 +180,7 @@ class NbForager:
         connector = self.api.circuits.circuits
         params_d = {s: getattr(connector, s) for s in getattr(connector, "_init_params")}
         nbf = NbForager(**params_d)
-        insert_tree(src=self.root, dst=nbf.root)
+        nb_tree.insert_tree(src=self.root, dst=nbf.root)
         return nbf
 
     @property
@@ -359,7 +247,14 @@ class NbForager:
 
         :rtype: NbTree
         """
-        self.tree = nb_tree.grow_tree(self.root)
+        tree = nb_tree.grow_tree(self.root)
+        nb_tree.insert_tree(src=tree, dst=self.tree)
+
+        self._extra__ipv4()
+        self._extra__ipam_aggregates()
+        self._extra__ipam_prefixes()
+        self._extra__ipam_ip_addresses()
+        self._extra__update_sub_prefixes()
         return self.tree
 
     def read_cache(self) -> None:
@@ -371,7 +266,7 @@ class NbForager:
         """
         cache = NbCache(cache=self.cache)
         tree, status = cache.read_cache()
-        insert_tree(src=tree, dst=self.root)
+        nb_tree.insert_tree(src=tree, dst=self.root)
         self.status = status
 
     def write_cache(self) -> None:
@@ -398,6 +293,123 @@ class NbForager:
         :return: Netbox version if version >= 3, otherwise empty string.
         """
         return str(self.status.get("netbox-version") or "0.0.0")
+
+    # ============================= helpers ==============================
+
+    def _get_ip_addresses_ip4(self) -> LDAny:
+        """Return ipam.ip_addresses family=4 sorted by IPv4."""
+        ip_addresses = self.ipam.ip_addresses.find_tree(family__value=4, vrf=None)
+        return sorted(ip_addresses, key=itemgetter("ipv4"))
+
+    def _get_aggregates_ip4(self) -> LDAny:
+        """Return ipam.aggregates family=4 sorted by IPv4."""
+        aggregates = self.ipam.aggregates.find_tree(family__value=4)
+        return sorted(aggregates, key=itemgetter("ipv4"))
+
+    def _get_prefixes_ip4(self) -> LDAny:
+        """Return ipam.prefixes family=4 sorted by IPv4."""
+        prefixes = self.ipam.prefixes.find_tree(family__value=4, vrf=None)
+        return sorted(prefixes, key=itemgetter("ipv4"))
+
+    def _get_prefixes_ip4_d(self) -> DiLDAny:
+        """Split prefixes by depth.
+
+        :return: A dictionary of prefixes where the key represents the depth
+            and the value represents a list of prefixes at that depth.
+        """
+        prefixes: LDAny = self._get_prefixes_ip4()
+        prefixes_d: DiLDAny = {d["_depth"]: [] for d in prefixes}
+        for prefix in prefixes:
+            depth = int(prefix["_depth"])
+            prefixes_d[depth].append(prefix)
+        return prefixes_d
+
+    def _extra__ipv4(self) -> None:
+        for model, key, strict in [
+            ("aggregates", "prefix", True),
+            ("prefixes", "prefix", True),
+            ("ip_addresses", "address", False),
+        ]:
+            objects: DiDAny = getattr(self.tree.ipam, model)
+            for data in objects.values():
+                snet = data[key]
+                data["ipv4"] = IPv4(snet, strict=strict)
+                data["aggregate"] = {}
+                data["super_prefix"] = {}
+                data["sub_prefixes"] = []
+                data["ip_addresses"] = []
+
+    def _extra__ipam_aggregates(self) -> None:
+        """Add prefixes to tree.ipam.aggregates.sub_prefixes."""
+        aggregates: LDAny = self._get_aggregates_ip4()
+        prefixes_d: DiLDAny = self._get_prefixes_ip4_d()
+        for aggregate in aggregates:
+            for depth, prefixes in prefixes_d.items():
+                for prefix in prefixes:
+                    _aggregate = aggregate["prefix"]
+                    _prefix = prefix["prefix"]
+                    if prefix["ipv4"] in aggregate["ipv4"]:
+                        prefix["aggregate"] = aggregate
+                        if depth == 0:
+                            aggregate["sub_prefixes"].append(prefix)
+
+    def _extra__ipam_prefixes(self) -> None:
+        """Add prefixes to tree.ipam.prefixes.sub_prefixes, super_prefix"""
+        super_prefixes = []
+        prefixes_d: DiLDAny = self._get_prefixes_ip4_d()
+        for depth, sub_prefixes in enumerate(prefixes_d.values()):
+            if not depth:
+                super_prefixes = sub_prefixes
+                continue
+            for super_prefix in super_prefixes:
+                if super_prefix["ipv4"].prefixlen == 32:
+                    continue
+                for sub_prefix in sub_prefixes:
+                    if sub_prefix["ipv4"] in (super_prefix["ipv4"]):
+                        super_prefix["sub_prefixes"].append(sub_prefix)
+                        sub_prefix["super_prefix"] = super_prefix
+            super_prefixes = sub_prefixes
+
+    def _extra__ipam_ip_addresses(self) -> None:
+        """Add prefixes to tree.ipam.ip-addresses.super_prefix."""
+        ip_addresses: LDAny = self._get_ip_addresses_ip4()
+        prefixes_d: DiLDAny = self._get_prefixes_ip4_d()
+        depths: LInt = list(prefixes_d)
+        depths.reverse()
+
+        added_addresses: LDAny = []
+        for depth in depths:
+            ip_addresses_ = ip_addresses.copy()
+            prefixes: LDAny = prefixes_d.get(depth, [])
+            for ip_address in ip_addresses_:
+                for prefix in prefixes:
+                    if ip_address["ipv4"] not in prefix["ipv4"]:
+                        continue
+                    if ip_address in added_addresses:
+                        continue
+                    ip_address["aggregate"] = prefix["aggregate"]
+                    ip_address["super_prefix"] = prefix
+                    prefix["ip_addresses"].append(ip_address)
+                    added_addresses.append(ip_address)
+            ip_addresses = [d for d in ip_addresses if d not in added_addresses]
+
+    def _extra__update_sub_prefixes(self) -> None:
+        """Update sub_prefixes in ipam.aggregates and ipam.prefixes.
+
+        Remove duplicates, remove objects with improper depth, sort by IPv4.
+        """
+        aggregates = self._get_aggregates_ip4()
+        for aggregate in aggregates:
+            sub_prefixes = vlist.no_dupl(aggregate["sub_prefixes"])
+            sub_prefixes = [d for d in sub_prefixes if not d["super_prefix"]]
+            aggregate["sub_prefixes"] = sorted(sub_prefixes, key=itemgetter("ipv4"))
+
+        prefixes = self._get_prefixes_ip4()
+        for prefix in prefixes:
+            sub_prefixes = vlist.no_dupl(prefix["sub_prefixes"])
+            prefix["sub_prefixes"] = sorted(sub_prefixes, key=itemgetter("ipv4"))
+            ip_addresses = vlist.no_dupl(prefix["ip_addresses"])
+            prefix["ip_addresses"] = sorted(ip_addresses, key=itemgetter("ipv4"))
 
     # =========================== data methods ===========================
 

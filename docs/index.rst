@@ -1,5 +1,10 @@
 netbox3
-========
+=======
+
+.. note::
+
+   THIS PROJECT IS UNDER ACTIVE DEVELOPMENT.
+
 
 Philosophy
 ==========
@@ -154,17 +159,17 @@ Create, get, update and delete ip-addresses.
     nb = NbApi(host=HOST, token=TOKEN)
 
     # Create 2 addresses with different methods (different outputs)
-    response = nb.ip_addresses.create(address="1.2.3.4/24", tags=[1], status="active")
+    response = nb.ipam.ip_addresses.create(address="1.2.3.4/24", tags=[1], status="active")
     print(response)  # <Response [201]>
-    data = nb.ip_addresses.create_d(address="1.2.3.4/24", tags=[2], status="reserved")
+    data = nb.ipam.ip_addresses.create_d(address="1.2.3.4/24", tags=[2], status="reserved")
     print(data)  # {'id': 183, 'display': '1.2.3.4/24', ...
 
     # Get all addresses
-    addresses = nb.ip_addresses.get()
+    addresses = nb.ipam.ip_addresses.get()
     print(len(addresses))  # 181
 
     # Get all ip-addresses in global routing
-    addresses = nb.ip_addresses.get(vrf="null")
+    addresses = nb.ipam.ip_addresses.get(vrf="null")
     print(len(addresses))  # 30
 
     # Get newly created ip-addresses by complex filter
@@ -172,22 +177,22 @@ Create, get, update and delete ip-addresses.
     # Filter addresses in the global routing AND
     # (have either the tag "bravo" OR "charlie") AND
     # (have a status of either active OR reserved).
-    addresses = nb.ip_addresses.get(or_q=["1.2.3", "4.5.6"],
-                                    vrf="null",
-                                    or_tag=["bravo", "charlie"],
-                                    status=["active", "reserved"])
+    addresses = nb.ipam.ip_addresses.get(or_q=["1.2.3", "4.5.6"],
+                                         vrf="null",
+                                         or_tag=["bravo", "charlie"],
+                                         status=["active", "reserved"])
     print(len(addresses))  # 2
 
-    addresses = nb.ip_addresses.get(address="1.2.3.4/24")
+    addresses = nb.ipam.ip_addresses.get(address="1.2.3.4/24")
     for address in addresses:
         # Update
         id_ = address["id"]
-        response = nb.ip_addresses.update(id=id_, description="text")
+        response = nb.ipam.ip_addresses.update(id=id_, description="text")
         print(response)  # <Response [200]>
-        print(nb.ip_addresses.get(id=id_)[0]["description"])  # text
+        print(nb.ipam.ip_addresses.get(id=id_)[0]["description"])  # text
 
         # Delete
-        response = nb.ip_addresses.delete(id=id_)
+        response = nb.ipam.ip_addresses.delete(id=id_)
         print(response)  # <Response [204]>
 
 

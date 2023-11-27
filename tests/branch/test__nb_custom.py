@@ -1,4 +1,4 @@
-# pylint: disable=protected-access
+# pylint: disable=R0801,W0212
 
 """Unittests nb_branch.py."""
 from typing import Any

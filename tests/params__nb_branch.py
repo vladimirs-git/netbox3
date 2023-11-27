@@ -1,7 +1,8 @@
-"""Params base.py."""
+"""Params."""
 from copy import deepcopy
 
 from netbox3.exceptions import NbBranchError
+from netbox3.types_ import DAny
 
 PREFIX = "10.0.0.0/24"
 NAME = "name"
@@ -9,6 +10,38 @@ IP0 = "1.1.1.1"
 IP32 = "1.1.1.1/32"
 
 # ====================== universal get methods =======================
+
+# test__any
+ANY = [
+    (["a"], {"a": None}, True, None),
+    (["a"], {"a": None}, False, None),
+    (["a"], {"a": "A"}, True, "A"),
+    (["a"], {"a": "A"}, False, "A"),
+    (["a"], {"a": 1}, True, 1),
+    (["a"], {"a": 1}, False, 1),
+    (["a"], {"a": {}}, True, {}),
+    (["a"], {"a": {}}, False, {}),
+    (["a"], {"a": {"k": "A"}}, True, {"k": "A"}),
+    (["a"], {"a": {"k": "A"}}, False, {"k": "A"}),
+    (["a", "b"], {"a": {"b": None}}, True, None),
+    (["a", "b"], {"a": {"b": None}}, False, None),
+    (["a", "b"], {"a": {"b": "A"}}, True, "A"),
+    (["a", "b"], {"a": {"b": "A"}}, False, "A"),
+    (["a", "b"], {"a": {"b": 1}}, True, 1),
+    (["a", "b"], {"a": {"b": 1}}, False, 1),
+    (["a", "b"], {"a": {"b": {"k": "B"}}}, True, {"k": "B"}),
+    (["a", "b"], {"a": {"b": {"k": "B"}}}, False, {"k": "B"}),
+    (["a", "b", "c"], {"a": {"b": {"c": None}}}, True, None),
+    (["a", "b", "c"], {"a": {"b": {"c": None}}}, False, None),
+    (["a", "b", "c"], {"a": {"b": {"c": "A"}}}, True, "A"),
+    (["a", "b", "c"], {"a": {"b": {"c": "A"}}}, False, "A"),
+    (["a", "b", "c"], {"a": {"b": {"c": 1}}}, True, 1),
+    (["a", "b", "c"], {"a": {"b": {"c": 1}}}, False, 1),
+    (["a", "b", "c"], {"a": {"b": {"c": {}}}}, True, {}),
+    (["a", "b", "c"], {"a": {"b": {"c": {}}}}, False, {}),
+    (["a", "b", "c"], {"a": {"b": {"c": {"k": "C"}}}}, True, {"k": "C"}),
+    (["a", "b", "c"], {"a": {"b": {"c": {"k": "C"}}}}, False, {"k": "C"}),
+]
 
 # test__dict
 DICT = [
@@ -34,12 +67,12 @@ INT = [
     (["id"], {"id": 0}, False, 0),
     (["id"], {"id": "0"}, True, 0),
     (["id"], {"id": "0"}, False, 0),
-    (["a", "b"], {"a": {"b": 2}}, True, 2),
-    (["a", "b"], {"a": {"b": 2}}, False, 2),
+    (["a", "b"], {"a": {"b": 1}}, True, 1),
+    (["a", "b"], {"a": {"b": 1}}, False, 1),
     (["a", "b"], {"a": {"b": None}}, True, NbBranchError),
     (["a", "b"], {"a": {"b": None}}, False, 0),
-    (["a", "b"], {"a": {"b": "2"}}, True, 2),
-    (["a", "b"], {"a": {"b": "2"}}, False, 2),
+    (["a", "b"], {"a": {"b": "1"}}, True, 1),
+    (["a", "b"], {"a": {"b": "1"}}, False, 1),
     (["a", "b", "c"], {"a": {"b": {"c": 3}}}, True, 3),
     (["a", "b", "c"], {"a": {"b": {"c": "3"}}}, True, 3),
     (["a", "b", "c"], {"a": {"b": {"c": None}}}, True, NbBranchError),
@@ -307,7 +340,7 @@ URL = [
 ]
 
 # test__platform_slug
-PLATFORM_D = {
+PLATFORM_D: DAny = {
     "url": "/api/dcim/devices/",
     "primary_ip4": {"address": "10.0.0.1/24"},
     "platform": {"slug": "platform1"},

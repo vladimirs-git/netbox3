@@ -26,7 +26,6 @@ class Connector(BaseC):
         """Create object in Netbox.
 
         :param kwargs: Parameters of new object to create.
-        :type kwargs: dict
 
         :return: Session response.
 
@@ -47,7 +46,6 @@ class Connector(BaseC):
         """Create object in Netbox.
 
         :param kwargs: Data of new object to create.
-        :type kwargs: dict
 
         :return: Data of newly crated object.
         :rtype: dict
@@ -114,14 +112,13 @@ class Connector(BaseC):
         :type or_{parameter}: list
 
         :param kwargs: Netbox REST API `Filtering parameters`_.
-        :type kwargs: dict
 
         :return: List of dictionaries containing Netbox objects.
         :rtype: List[dict]
         """
         params_ld: LDList = self._validate_params(**kwargs)
         items: LDAny = self._query_params_ld(params_ld)
-        self._check_keys(items=items, denied=self._reserved_ipam_keys)
+        self._check_keys(items=items)
         return items
 
     # noinspection PyIncorrectDocstring
@@ -132,7 +129,6 @@ class Connector(BaseC):
         :type id: int
 
         :param kwargs: Parameters to update object in Netbox.
-        :type kwargs: dict
 
         :return: Session response.
 
@@ -161,7 +157,6 @@ class Connector(BaseC):
         :type id: int
 
         :param kwargs: Parameters to update object in Netbox.
-        :type kwargs: dict
 
         :return: Data of updated object.
         :rtype: dict

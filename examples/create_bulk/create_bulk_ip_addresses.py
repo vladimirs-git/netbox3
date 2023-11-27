@@ -17,7 +17,7 @@ def create__ipam__ip_addresses():
     for idx1 in range(10 + 1):
         for idx2 in range(255 + 1):
             address = f"10.200.{idx1}.{idx2}/24"
-            response = nb.ip_addresses.create(address=address)
+            response = nb.ipam.ip_addresses.create(address=address)
             print(response, address)
 
 

@@ -10,6 +10,14 @@ from netbox3.types_ import LStr
 from tests import params__nb_branch as p
 
 
+@pytest.mark.parametrize("keys, data, strict, expected", p.ANY)
+def test__any(keys: LStr, data: dict, strict: bool, expected: Any):
+    """NbBranch.any()."""
+    branch = NbBranch(data=data, strict=strict)
+    actual = branch.any(*keys)
+    assert actual == expected
+
+
 @pytest.mark.parametrize("keys, data, strict, expected", p.DICT)
 def test__dict(keys: LStr, data: dict, strict: bool, expected: Any):
     """NbBranch.dict()."""
