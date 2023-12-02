@@ -1,12 +1,12 @@
 """Tree of Netbox model objects."""
 import logging
 from copy import deepcopy
-from typing import Any, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
 from netbox3 import helpers as h
-from netbox3.types_ import DiDAny, LStr
+from netbox3.types_ import DiDAny, LStr, DAny
 
 
 class BaseTree(BaseModel):
@@ -225,7 +225,7 @@ def insert_tree(src: NbTree, dst: NbTree) -> None:
 
 
 def grow_tree(tree: NbTree) -> NbTree:
-    """Join Netbox objects in tree within itself.
+    """Assemble Netbox objects in tree within itself.
 
     The Netbox objects are represented as a multidimensional dictionary.
     :param tree: NbTree object to join the data in.
@@ -233,12 +233,22 @@ def grow_tree(tree: NbTree) -> NbTree:
     :return: NbTree object with the joined data.
     """
     tree = deepcopy(tree)
-    for app in tree.apps():
+    for app in tree.apps():  # pylint: disable=R1702
         for model in getattr(tree, app).models():
             objects_d = getattr(getattr(tree, app), model)
-            for object_d in objects_d.values():
-                for _, data in object_d.items():
-                    _join_data(data, tree)
+            for _, parent in objects_d.items():
+                for key, child in parent.items():
+                    if isinstance(child, dict):
+                        if child_full := _get_child(child=child, tree=tree):
+                            parent[key].clear()
+                            parent[key].update(child_full)
+                    elif isinstance(child, list):
+                        for child_ in child:
+                            if not isinstance(child_, dict):
+                                continue
+                            if child_full := _get_child(child=child_, tree=tree):
+                                child_.clear()
+                                child_.update(child_full)
     return tree
 
 
@@ -272,44 +282,27 @@ def missed_urls(urls: LStr, tree: NbTree) -> LStr:
 # ============================= helpers ==============================
 
 
-def _join_data(data: Any, tree: NbTree) -> None:
-    """Search netbox object in data dictionary and replace it by full data from the tree.
+def _get_child(child: DAny, tree: NbTree) -> DAny:
+    """Search child Netbox object in the model data to insert (replace) it in the parent.
 
-    :param data: Dictionary containing short data.
-    :param tree: NbTree object, contains full data.
+    :param child: Netbox object that require dependency update.
+    :param tree: NbTree object, contains model data (Netbox objects).
 
-    :return: None. Updates data in the short_d dictionary.
+    :return: Child dictionary from the model that needs to be inserted into the parent dictionary.
     """
-    id_ = 0
-    objects_d: DiDAny = {}
-    while True:
-        if isinstance(data, list):
-            for item in data:
-                _join_data(item, tree)
-            break
-        if not isinstance(data, dict):
-            break
+    if child.get("url"):
+        url = str(child["url"]).strip("/")
+        app, model, digit = h.split_url(url)
+        model = h.model_to_attr(model)
+        if model_d := getattr(getattr(tree, app), model):
+            if child_full := model_d.get(int(digit)):
+                return child_full
 
-        # url
-        if data.get("url"):
-            url = str(data["url"]).strip("/")
-            if not url:
-                raise ValueError(f"url expected in {data=}")
+    if child.get("object_id") and child.get("object"):
+        if isinstance(child["object"], dict):
+            child_full = _get_child(child["object"], tree)
+            child["object"].clear()
+            child["object"].update(child_full)
+            return {}
 
-            app, model, digit = h.split_url(url)
-            model = h.model_to_attr(model)
-            if not digit.isdigit():
-                raise ValueError(f"digit id expected in {url=}")
-
-            id_ = int(digit)
-            objects_d = getattr(getattr(tree, app), model)
-
-        # object
-        elif data.get("object_id") and data.get("object"):
-            _join_data(data["object"], tree)
-
-        break
-
-    if objects_d:
-        if object_d := objects_d.get(id_):
-            data.update(object_d)
+    return {}

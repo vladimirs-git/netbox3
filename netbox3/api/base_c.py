@@ -8,11 +8,12 @@ import json
 import logging
 import re
 import time
+import urllib
 from operator import itemgetter
 from queue import Queue
 from threading import Thread
 from typing import Callable
-from urllib.parse import urlencode
+from urllib.parse import urlencode, ParseResult
 
 import requests
 from requests import Session, Response
@@ -23,8 +24,8 @@ from netbox3 import helpers as h
 from netbox3.api import param_path
 from netbox3.api.param_path import ParamPath, DParamPath
 from netbox3.exceptions import NbApiError
-from netbox3.types_ import DAny, DStr, LDAny, SStr, LStr, DLInt, DList, LDList, DLStr, DDAny
-from netbox3.types_ import TLists, OUParam, OSeqStr, LParam
+from netbox3.types_ import DAny, DStr, LDAny, LStr, DLInt, DList, LDList, DLStr, DDAny
+from netbox3.types_ import TLists, OUParam, LParam
 
 
 class BaseC:
@@ -58,12 +59,36 @@ class BaseC:
         "default_get",
         "loners",
     ]
-    _reserved_ipam_keys = [
-        "overlapped",
-        "warnings",
-        "nbnets",
-        "nbnets__subnets",
-    ]
+    _reserved_keys: DLStr = {
+        "ipam/": [
+            # ipam aggregates, prefixes, ip_addresses
+            "ipv4",
+            "aggregate",
+            "super_prefix",
+            "sub_prefixes",
+            "ip_addresses",
+            # evonetbox
+            "overlapped",
+            "warnings",
+            "nbnets",
+            "nbnets__subnets",
+        ],
+        "dcim/devices/": [
+            "interfaces",
+            "front_ports",
+            "rear_ports",
+            "console_ports",
+            "console_server_ports",
+            "power_ports",
+            "power_outlets",
+            "module_bays",
+            "device_bays",
+            "inventory_items",
+        ],
+        "virtualization/virtual-machines/": [
+            "interfaces",
+        ],
+    }
 
     def __init__(self, **kwargs):
         """Init BaseC.
@@ -463,29 +488,22 @@ class BaseC:
         }
         return headers
 
-    @staticmethod
-    def _check_keys(items: LDAny, denied: OSeqStr = None) -> None:
-        """Check if denied keys are absent in the data.
+    def _check_reserved_keys(self, items: LDAny) -> None:
+        """Check if reserved keys are present in the data.
 
         The Netbox REST API returns the object as a dictionary.
-        Some of my dirty scripts inject extra key/value pairs into this object.
-        I need to make sure that these keys are not used in Netbox.
+        NbForager inject extra key/value pairs into Netbox object.
+        Need to make sure that these keys are not used in Netbox REST API.
 
-        :return: True if all denied keys are absent in the data, otherwise if a denied key is
-            found in the object.
+        :return: None.
+        :raise NbApiError: Reserved key is found in the Netbox object.
         """
-        if denied is None:
-            denied = []
-
-        denied_keys: SStr = set()
         for data in items:
-            for key in denied:
-                if key in data:
-                    denied_keys.add(key)
-                    msg = f"Denied {key=} in Netbox {data=}"
-                    logging.error(msg)
-        if denied_keys:
-            raise NbApiError(f"Netbox data contains {denied_keys=}")
+            url_o: ParseResult = urllib.parse.urlparse(data["url"])
+            for path, reserved_keys in self._reserved_keys.items():
+                if url_o.path.find(path) > -1:
+                    if keys := set(reserved_keys).intersection(data):
+                        raise NbApiError(f"NbForager reserved {keys=} detected in {self.url}.")
 
     def _slice_params_counters(self, results: LDAny) -> LDAny:
         """Generate sliced parameters based on counts in results.

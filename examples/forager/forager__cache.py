@@ -9,7 +9,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger().addHandler(logging.StreamHandler())
 
 HOST = "demo.netbox.dev"
-TOKEN = "1a8424035853e078f9a65e06de9247249d26d5a1"
+TOKEN = "1234567890123456789012345678901234567890"
 CACHE = "./demo.netbox.dev.pickle"
 nbf = NbForager(host=HOST, token=TOKEN, cache=CACHE)
 
@@ -19,9 +19,9 @@ nbf.ipam.aggregates.get()
 nbf.tenancy.tenant_groups.get()
 print(f"{nbf}")  # <NbForager: ipam=4, tenancy=6>
 pprint(nbf.root.ipam.aggregates)
-# {1: {'id': 1,
-#      'prefix': '10.0.0.0/8',
-#      'url': 'https://demo.netbox.dev/api/ipam/aggregates/1/'},
+# {1: {"id": 1,
+#      "prefix": "10.0.0.0/8",
+#      "url": "https://demo.netbox.dev/api/ipam/aggregates/1/"},
 #      ...
 
 # Write cache to pickle file
@@ -37,11 +37,11 @@ pprint(nbf.root.ipam.aggregates)
 nbf.read_cache()
 print(f"{nbf}")  # <NbForager: ipam=4, tenancy=6>
 pprint(nbf.root.ipam.aggregates)
-# {1: {'id': 1,
-#      'prefix': '10.0.0.0/8',
-#      'url': 'https://demo.netbox.dev/api/ipam/aggregates/1/'},
+# {1: {"id": 1,
+#      "prefix": "10.0.0.0/8",
+#      "url": "https://demo.netbox.dev/api/ipam/aggregates/1/"},
 #      ...
 pprint(nbf.status["meta"])
-# {'host': 'demo.netbox.dev',
-#  'url': 'https://demo.netbox.dev/api/',
-#  'write_time': '2020-12-31 23:59:59'}
+# {"host": "demo.netbox.dev",
+#  "url": "https://demo.netbox.dev/api/",
+#  "write_time": "2020-12-31 23:59:59"}

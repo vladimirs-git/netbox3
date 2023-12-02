@@ -1,15 +1,14 @@
 # pylint: disable=W0212,R0801,W0621
 
 """Unittests base_fa.py."""
-
 import pytest
 
-from netbox3.nb_forager import NbForager
+from netbox3 import NbForager
 
 
 @pytest.fixture
 def nbf() -> NbForager:
-    """Init NbForager."""
+    """Init NbForager without data."""
     return NbForager(host="netbox")
 
 
@@ -25,19 +24,19 @@ def test__init(nbf):
 
 def test__count(nbf):
     """BaseAF.count()."""
-    nbf.circuits.circuit_terminations.data.update({1: {}})
-    nbf.circuits.circuit_types.data.update({1: {}})
-    nbf.dcim.device_roles.data.update({1: {}})
-    nbf.dcim.device_types.data.update({1: {}, 2: {}})
-    nbf.ipam.aggregates.data.update({1: {}})
-    nbf.ipam.asn_ranges.data.update({1: {}, 2: {}, 3: {}})
-    nbf.tenancy.tenant_groups.data.update({1: {}})
-    nbf.tenancy.tenants.data.update({1: {}, 2: {}, 3: {}, 4: {}})
+    nbf.circuits.circuit_terminations.root_d.update({1: {}})
+    nbf.circuits.circuit_types.root_d.update({1: {}})
+    nbf.dcim.device_roles.root_d.update({1: {}})
+    nbf.dcim.device_types.root_d.update({1: {}, 2: {}})
+    nbf.ipam.aggregates.root_d.update({1: {}})
+    nbf.ipam.asn_ranges.root_d.update({1: {}, 2: {}, 3: {}})
+    nbf.tenancy.tenant_groups.root_d.update({1: {}})
+    nbf.tenancy.tenants.root_d.update({1: {}, 2: {}, 3: {}, 4: {}})
     assert nbf.circuits.count() == 2
     assert nbf.dcim.count() == 3
     assert nbf.ipam.count() == 4
     assert nbf.tenancy.count() == 5
 
     assert len(nbf.root.circuits.circuit_terminations) == 1
-    assert len(nbf.circuits.circuit_terminations.data) == 1
+    assert len(nbf.circuits.circuit_terminations.root_d) == 1
     assert f"{nbf.circuits!r}" == "<CircuitsAF: 2>"

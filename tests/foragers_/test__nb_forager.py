@@ -1,4 +1,4 @@
-# pylint: disable=W0212,R0801,R0915,W0621
+# pylint: disable=E1101,W0212,R0801,R0915,W0621
 
 """Unittests foragers."""
 import inspect
@@ -9,24 +9,37 @@ from unittest.mock import patch, mock_open
 import pytest
 import requests_mock
 from _pytest.monkeypatch import MonkeyPatch
-from requests_mock import Mocker
 
-from netbox3 import helpers as h, nb_forager, NbApi
+from netbox3 import helpers as h, nb_forager, NbApi, nb_tree
 from netbox3.nb_cache import NbCache
 from netbox3.nb_forager import NbForager
-from netbox3.nb_tree import NbTree, insert_tree
+from netbox3.nb_tree import NbTree
 from tests import objects
 
 
 @pytest.fixture
 def nbf() -> NbForager:
-    """Init NbForager with root data."""
+    """Init NbForager without data."""
     return NbForager(host="netbox")
 
 
 @pytest.fixture
-def mock_requests_status():
-    """Mock request for vrf searching."""
+def nbf_r() -> NbForager:
+    """Init NbForager with NbForager.root data."""
+    nbf_ = NbForager(host="netbox")
+    tree: NbTree = objects.full_tree()
+    nb_tree.insert_tree(src=tree, dst=nbf_.root)
+    return nbf_
+
+
+@pytest.fixture
+def nbf_t() -> NbForager:
+    """Init NbForager with NbForager.tree data."""
+    nbf_ = NbForager(host="netbox")
+    tree: NbTree = objects.full_tree()
+
+    nb_tree.insert_tree(src=tree, dst=nbf_.tree)
+    return nbf_
 
 
 def test__app_model(nbf: NbForager):
@@ -53,8 +66,9 @@ def test__app_model(nbf: NbForager):
 
 def test__init(nbf: NbForager):
     """NbForager.__init__()."""
-    actual = list(inspect.signature(nbf.__init__).parameters)
+    actual = list(inspect.signature(type(nbf).__init__).parameters)
     expected = [
+        "self",
         "host",
         "token",
         "scheme",
@@ -171,14 +185,14 @@ def test__count(nbf: NbForager):
     """NbForager.count()."""
     assert nbf.count() == 0
 
-    nbf.circuits.circuit_terminations.data.update({1: {}})
-    nbf.dcim.device_roles.data.update({1: {}, 3: {}})
-    nbf.ipam.aggregates.data.update({1: {}, 2: {}, 3: {}})
-    nbf.tenancy.tenant_groups.data.update({1: {}, 2: {}, 3: {}, 4: {}})
+    nbf.circuits.circuit_terminations.root_d.update({1: {}})
+    nbf.dcim.device_roles.root_d.update({1: {}, 3: {}})
+    nbf.ipam.aggregates.root_d.update({1: {}, 2: {}, 3: {}})
+    nbf.tenancy.tenant_groups.root_d.update({1: {}, 2: {}, 3: {}, 4: {}})
     assert nbf.count() == 10
 
     assert len(nbf.root.circuits.circuit_terminations) == 1
-    assert len(nbf.circuits.circuit_terminations.data) == 1
+    assert len(nbf.circuits.circuit_terminations.root_d) == 1
     assert f"{nbf!r}" == "<NbForager: circuits=1, dcim=2, ipam=3, tenancy=4>"
 
 
@@ -195,7 +209,7 @@ def test__clear(nbf: NbForager):
 
     nbf.root.ipam.vrfs.update(objects.vrf_d([1]))
     assert [d["id"] for d in nbf.root.ipam.vrfs.values()] == [1]
-    assert [d["id"] for d in nbf.ipam.vrfs.data.values()] == [1]
+    assert [d["id"] for d in nbf.ipam.vrfs.root_d.values()] == [1]
     assert [d["id"] for d in nbf.tree.ipam.vrfs.values()] == []
 
 
@@ -211,10 +225,10 @@ def test__copy(nbf: NbForager):
     copy_.root.ipam.vrfs.update(objects.vrf_d([3, 4]))
     assert nbf.count() == 2
     assert [d["id"] for d in nbf.root.ipam.vrfs.values()] == [1, 2]
-    assert [d["id"] for d in nbf.ipam.vrfs.data.values()] == [1, 2]
+    assert [d["id"] for d in nbf.ipam.vrfs.root_d.values()] == [1, 2]
     assert copy_.count() == 3
     assert [d["id"] for d in copy_.root.ipam.vrfs.values()] == [1, 3, 4]
-    assert [d["id"] for d in copy_.ipam.vrfs.data.values()] == [1, 3, 4]
+    assert [d["id"] for d in copy_.ipam.vrfs.root_d.values()] == [1, 3, 4]
 
 
 def test__read_cache(nbf: NbForager):
@@ -240,21 +254,7 @@ def test__write_cache(nbf: NbForager, monkeypatch: MonkeyPatch):
     nbf.write_cache()
 
 
-def test__grow_tree(nbf: NbForager):
-    """NbForager.grow_tree()."""
-    nbf.root.ipam.vrfs.update({1: objects.VRF1})
-    nbf.root.tenancy.tenants.update({1: objects.TENANT1})
-    assert nbf.tree.ipam.vrfs == {}
-
-    result: NbTree = nbf.grow_tree()
-    assert result.ipam.vrfs[1]["tenant"]["tags"][0]["name"] == "TAG1"
-    assert nbf.tree.ipam.vrfs[1]["tenant"]["tags"][0]["name"] == "TAG1"
-
-
-def test__get_status(
-        nbf: NbForager,
-        mock_requests_status: Mocker,  # pylint: disable=unused-argument
-):
+def test__get_status(nbf: NbForager):
     """NbForager.get_status()."""
     with requests_mock.Mocker() as mock:
         mock.get("https://netbox/api/status/", json={"netbox-version": "3.6.5"})
@@ -264,9 +264,44 @@ def test__get_status(
         assert actual == {"netbox-version": "3.6.5"}
 
 
+def test__grow_tree(nbf_r: NbForager):
+    """NbForager.grow_tree()."""
+    assert nbf_r.tree.ipam.aggregates == {}
+    assert nbf_r.tree.ipam.prefixes == {}
+    assert nbf_r.tree.ipam.ip_addresses == {}
+
+    tree: NbTree = nbf_r.grow_tree(extra=False)
+
+    aggregate = tree.ipam.aggregates[1]
+    assert aggregate["tenant"]["tags"][0]["name"] == "TAG1"
+    assert aggregate.get("sub_prefixes") is None
+    prefix = tree.ipam.prefixes[1]
+    assert prefix["tenant"]["tags"][0]["name"] == "TAG1"
+    assert prefix.get("sub_prefixes") is None
+    ip_address = tree.ipam.ip_addresses[1]
+    assert ip_address["tenant"]["tags"][0]["name"] == "TAG1"
+    assert ip_address.get("super_prefix") is None
+    device = tree.dcim.devices[1]
+    assert device.get("interfaces") is None
+
+    tree = nbf_r.grow_tree(extra=True)
+
+    aggregate = tree.ipam.aggregates[1]
+    assert aggregate["tenant"]["tags"][0]["name"] == "TAG1"
+    assert aggregate["sub_prefixes"][0]["prefix"] == "10.0.0.0/24"
+    prefix = tree.ipam.prefixes[1]
+    assert prefix["tenant"]["tags"][0]["name"] == "TAG1"
+    assert prefix["sub_prefixes"][0]["prefix"] == "10.0.0.0/31"
+    ip_address = tree.ipam.ip_addresses[1]
+    assert ip_address["tenant"]["tags"][0]["name"] == "TAG1"
+    assert ip_address["super_prefix"]["prefix"] == "10.0.0.0/24"
+    device = tree.dcim.devices[1]
+    assert device["interfaces"]["GigabitEthernet1/0/1"]["name"] == "GigabitEthernet1/0/1"
+
+
 @pytest.mark.parametrize("version, expected", [
     ("", "0.0.0"),
-    ("3.6.5", "3.6.5")
+    ("3.6.5", "3.6.5"),
 ])
 def test__version(nbf: NbForager, version, expected):
     """NbForager.version()."""
@@ -275,42 +310,36 @@ def test__version(nbf: NbForager, version, expected):
     assert actual == expected
 
 
-def test__devices_primary_ip4(nbf: NbForager):
+# =========================== data methods ===========================
+
+def test__devices_primary_ip4(nbf_r: NbForager):
     """NbForager.devices_primary_ip4()."""
-    tree = objects.full_tree()
-    insert_tree(src=tree, dst=nbf.root)
-    actual = nbf._devices_primary_ip4()
-    assert actual == ["10.1.1.1/24", "10.2.2.2/24"]
+    actual = nbf_r._devices_primary_ip4()
+    assert actual == ["10.1.1.1/24", "10.2.2.2/24", "10.3.3.3/24"]
 
-    nbf.root.dcim.devices[1]["primary_ip4"] = None
-    actual = nbf._devices_primary_ip4()
-    assert actual == ["10.2.2.2/24"]
+    nbf_r.root.dcim.devices[1]["primary_ip4"] = None
+    actual = nbf_r._devices_primary_ip4()
+    assert actual == ["10.2.2.2/24", "10.3.3.3/24"]
 
 
-def test__set_addresses_mask_32(nbf: NbForager):
+def test__set_addresses_mask_32(nbf_r: NbForager):
     """NbForager.set_addresses_mask_32()."""
-    tree = objects.full_tree()
-    insert_tree(src=tree, dst=nbf.root)
+    actual = [d["address"] for d in nbf_r.root.ipam.ip_addresses.values()]
+    assert actual == ["10.0.0.1/24", "1.0.0.1/24", "10.0.0.3/24"]
 
-    actual = [d["address"] for d in nbf.root.ipam.ip_addresses.values()]
-    assert actual == ["10.0.0.1/24", "1.0.0.1/24"]
-
-    nbf._set_ipam_ip_addresses_mask_32()
-    actual = [d["address"] for d in nbf.root.ipam.ip_addresses.values()]
-    assert actual == ["10.0.0.1/32", "1.0.0.1/32"]
+    nbf_r._set_ipam_ip_addresses_mask_32()
+    actual = [d["address"] for d in nbf_r.root.ipam.ip_addresses.values()]
+    assert actual == ["10.0.0.1/32", "1.0.0.1/32", "10.0.0.3/32"]
 
 
-def test__print_warnings(nbf: NbForager, caplog):
+def test__print_warnings(nbf_r: NbForager, caplog):
     """NbForager.print_warnings()."""
-    nbf._print_warnings()
+    nbf_r._print_warnings()
     actual = [record.levelname == "WARNING" for record in caplog.records]
     assert actual == []
 
-    tree = objects.full_tree()
-    tree.ipam.ip_addresses[1]["warnings"] = ["warning"]  # pylint: disable=E1101
-    insert_tree(src=tree, dst=nbf.root)
-
-    nbf._print_warnings()
+    nbf_r.root.ipam.ip_addresses[1]["warnings"] = ["warning"]  # pylint: disable=E1101
+    nbf_r._print_warnings()
     actual = [record.levelname == "WARNING" for record in caplog.records]
     assert actual == [True]
 

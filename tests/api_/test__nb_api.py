@@ -50,8 +50,9 @@ def test__app_model(api: NbApi):
 
 def test__init__(api: NbApi):
     """NbApi.__init__()."""
-    actual = list(inspect.signature(api.__init__).parameters)
+    actual = list(inspect.signature(type(api).__init__).parameters)
     expected = [
+        "self",
         "host",
         "token",
         "scheme",

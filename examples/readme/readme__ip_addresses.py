@@ -8,14 +8,14 @@ logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger().addHandler(logging.StreamHandler())
 
 HOST = "demo.netbox.dev"
-TOKEN = "1a8424035853e078f9a65e06de9247249d26d5a1"
+TOKEN = "1234567890123456789012345678901234567890"
 nb = NbApi(host=HOST, token=TOKEN)
 
 # Create 2 addresses with different methods (different outputs)
 response = nb.ipam.ip_addresses.create(address="1.2.3.4/24", tags=[2], status="active")
 print(response)  # <Response [201]>
 data = nb.ipam.ip_addresses.create_d(address="1.2.3.4/24", tags=[3], status="reserved")
-print(data)  # {'id': 183, 'display': '1.2.3.4/24', ...
+print(data)  # {"id": 183, "display": "1.2.3.4/24", ...
 
 # Get all addresses
 addresses = nb.ipam.ip_addresses.get()

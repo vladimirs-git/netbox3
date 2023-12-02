@@ -8,7 +8,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger().addHandler(logging.StreamHandler())
 
 HOST = "demo.netbox.dev"
-TOKEN = "1a8424035853e078f9a65e06de9247249d26d5a1"
+TOKEN = "1234567890123456789012345678901234567890"
 nb = NbApi(host=HOST, token=TOKEN)
 
 # All objects

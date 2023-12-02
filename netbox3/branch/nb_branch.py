@@ -1,13 +1,13 @@
 # pylint: disable=R0904
 
 """NbBranch."""
-from typing import Type
+from typing import Any, Type, Dict, List
 
 from vhelpers import vstr
 
 from netbox3 import wrappers
 from netbox3.exceptions import NbBranchError
-from netbox3.types_ import DAny, SeqStr, LStr
+from netbox3.types_ import DAny, SeqStr, LStr, Int, Str
 
 
 class NbBranch:
@@ -56,7 +56,20 @@ class NbBranch:
 
     # ====================== universal get methods =======================
 
-    def dict(self, *keys) -> dict:
+    def any(self, *keys) -> Any:
+        """Get any value by keys.
+
+        :param keys: Chaining dictionary keys to retrieve the desired value.
+
+        :return: Value or None if the value is absent.
+        :rtype: Any
+        """
+        try:
+            return self._get_keys(type_=type(None), keys=keys, data=self.data)
+        except NbBranchError:
+            return None
+
+    def dict(self, *keys) -> Dict:
         """Get dictionary value by keys.
 
         :param keys: Chaining dictionary keys to retrieve the desired value.
@@ -98,7 +111,7 @@ class NbBranch:
             raise NbBranchError(f"{keys=} {int} expected in {self._source()}.")
         return 0
 
-    def list(self, *keys) -> list:
+    def list(self, *keys) -> List:
         """Get list value by keys.
 
         :param keys: Chaining dictionary keys to retrieve the desired value.
@@ -122,8 +135,10 @@ class NbBranch:
         """
         return self._get_keys(type_=str, keys=keys, data=self.data)
 
+    # ======================== strict get methods ========================
+
     @wrappers.strict_value
-    def strict_dict(self, *keys) -> dict:
+    def strict_dict(self, *keys) -> Dict:
         """Get dictionary value by keys in strict manner, value is mandatory.
 
         Useful when strict=False, but you need to obtain a value in a strict manner.
@@ -137,7 +152,7 @@ class NbBranch:
         return self.dict(*keys)
 
     @wrappers.strict_value
-    def strict_int(self, *keys) -> int:
+    def strict_int(self, *keys) -> Int:
         """Get integer value by keys in strict manner, value is mandatory.
 
         Useful when strict=False, but you need to obtain a value in a strict manner.
@@ -146,12 +161,12 @@ class NbBranch:
         :return: Integer value.
         :rtype: int
 
-        :raise NbBranchError: If the value is not a int or key is absent or value is 0.
+        :raise NbBranchError: If the value is not int or key is absent or value is 0.
         """
         return self.int(*keys)
 
     @wrappers.strict_value
-    def strict_list(self, *keys) -> list:
+    def strict_list(self, *keys) -> List:
         """Get string value by keys in strict manner, value is mandatory.
 
         Useful when strict=False, but you need to obtain a value in a strict manner.
@@ -165,7 +180,7 @@ class NbBranch:
         return self.list(*keys)
 
     @wrappers.strict_value
-    def strict_str(self, *keys) -> str:
+    def strict_str(self, *keys) -> Str:
         """Get string value by keys in strict manner, value is mandatory.
 
         :param keys: Chaining dictionary keys to retrieve the desired value.
@@ -177,7 +192,9 @@ class NbBranch:
         """
         return self.str(*keys)
 
-    def _get_keys(self, type_: Type, keys: SeqStr, data: dict):
+    # ============================= helpers ==============================
+
+    def _get_keys(self, type_: Type, keys: SeqStr, data: Dict) -> Any:
         """Retrieve values from data using keys and check their data types.
 
         :param type_: Data type.
@@ -190,13 +207,15 @@ class NbBranch:
         """
         try:
             for key in keys:
-                data = data[key]
+                data = data[key]  # type: ignore
         except (KeyError, TypeError) as ex:
             if self.strict:
                 ex_type = type(ex).__name__
                 raise NbBranchError(f"{ex_type}: {ex}, {keys=} in {self._source()}.") from ex
             return type_()
 
+        if type_ is type(None):
+            return data
         if not isinstance(data, type_):
             if self.strict:
                 ex_type = "TypeError"
@@ -208,8 +227,8 @@ class NbBranch:
     def tags(self) -> LStr:
         """Get tag slugs from the data.
 
-        :return: List og tag slugs.
-        :rtype: lstr
+        :return: Slugs of tag.
+        :rtype: List[str]
         """
         tags_ = self.list("tags")
         if not tags_:
@@ -221,7 +240,7 @@ class NbBranch:
                 tags.append(tag)
         return tags
 
-    def _source(self) -> str:
+    def _source(self) -> Str:
         """Return URL of source object or data."""
         if isinstance(self.data, dict):
             if url := self.data.get("url"):

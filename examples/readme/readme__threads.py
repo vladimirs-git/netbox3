@@ -9,12 +9,12 @@ logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger().addHandler(logging.StreamHandler())
 
 HOST = "demo.netbox.dev"
-TOKEN = "1a8424035853e078f9a65e06de9247249d26d5a1"
+TOKEN = "1234567890123456789012345678901234567890"
 
 # Get data in threading mode.
 start = datetime.now()
 nb = NbApi(host=HOST, token=TOKEN, threads=10, interval=0.1, limit=200)
-objects = nb.ip_addresses.get()
+objects = nb.ipam.ip_addresses.get()
 seconds = (datetime.now() - start).seconds
 print([d["address"] for d in objects])
 print(f"{len(objects)=} {seconds=}")
@@ -34,7 +34,7 @@ print(f"{len(objects)=} {seconds=}")
 # Get data in loop mode, to compare time performance.
 start = datetime.now()
 nb = NbApi(host=HOST, token=TOKEN)
-objects = nb.ip_addresses.get()
+objects = nb.ipam.ip_addresses.get()
 seconds = (datetime.now() - start).seconds
 print(f"{len(objects)=} {seconds=}")
 # DEBUG    : Starting new HTTPS connection (1): demo.netbox.dev:443

@@ -31,7 +31,7 @@ def test__create(
 ):
     """Connector._join_params()."""
     monkeypatch.setattr(Session, "post", mock_session(expected))
-    response: Response = api.ip_addresses.create(**data)
+    response: Response = api.ipam.ip_addresses.create(**data)
     actual = response.status_code
     assert actual == expected
 
@@ -45,7 +45,7 @@ def test__create_d(
 ):
     """Connector._join_params()."""
     monkeypatch.setattr(Session, "post", mock_session(status_code, content))
-    actual: DAny = api.ip_addresses.create_d(**data)
+    actual: DAny = api.ipam.ip_addresses.create_d(**data)
     if content:
         assert actual == data
     else:
@@ -65,12 +65,12 @@ def test__update(
     """Connector._join_params()."""
     monkeypatch.setattr(Session, "patch", mock_session(expected))
     if isinstance(expected, int):
-        response: Response = api.ip_addresses.update(**data)
+        response: Response = api.ipam.ip_addresses.update(**data)
         actual = response.status_code
         assert actual == expected
     else:
         with pytest.raises(expected):
-            api.ip_addresses.update(**data)
+            api.ipam.ip_addresses.update(**data)
 
 
 @pytest.mark.parametrize("data, status_code, content", [
@@ -86,7 +86,7 @@ def test__update_d(
 ):
     """Connector.update_d()."""
     monkeypatch.setattr(Session, "patch", mock_session(status_code, content))
-    actual: DAny = api.ip_addresses.update_d(**data)
+    actual: DAny = api.ipam.ip_addresses.update_d(**data)
     if content:
         assert actual == data
     else:

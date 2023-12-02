@@ -1,4 +1,4 @@
-# pylint: disable=E1101,W0212
+# pylint: disable=E0237,E1101,W0212
 
 """Unittests nb_tree.py."""
 from typing import Any
@@ -76,71 +76,155 @@ def test__models():
     assert actual == expected
 
 
-@pytest.mark.parametrize("data, expected", [
-    ({"id": 9, "url": "/circuits/circuit-terminations/1"}, 1),
-    ({"id": 9, "url": "/circuits/circuit-terminations/1/"}, 1),
-    ({"id": 9, "url": "/typo/ip_addresses/1"}, AttributeError),
-    ({"id": 9, "url": "/ipam/typo/1"}, AttributeError),
-    ({"id": 9, "url": "/ipam/1"}, ValueError),
-    ({"id": 9, "url": "/ipam/ip_addresses/typo"}, ValueError),
-    ({"id": 9, "url": "/ipam/ip_addresses/8"}, 9),
-    ({"id": 9}, 9),
-    (1, 9),
-    ("value", 9),
+@pytest.mark.parametrize("child, expected, exp_object", [
+    # url
+    ({"url": "/dcim/cables/1"}, 1, None),
+    ({"url": "/circuits/circuit-terminations/1"}, 1, None),
+    ({"url": "/circuits/circuit-terminations/1/"}, 1, None),
+    ({"url": "/"}, AttributeError, None),
+    ({"url": "/typo/ip_addresses/1"}, AttributeError, None),
+    ({"url": "/ipam/typo/1"}, AttributeError, None),
+    ({"url": "/ipam/1"}, AttributeError, None),
+    ({"url": "/ipam/ip_addresses/typo"}, ValueError, None),
+    ({"id": 9, "url": "/ipam/ip_addresses/9"}, None, None),
+    ({"id": 9, "url": ""}, None, None),
+    ({"id": 9}, None, None),
+    # object
+    ({"object_id": 1, "object": {"url": "/dcim/cables/1"}}, None, 1),
+    ({"object_id": 1, "object": "typo"}, None, None),
 ])
-def test__join_data(data: Any, expected: Any):
-    """nb_tree._join_data() for dict"""
+def test__get_child(child: Any, expected: Any, exp_object):
+    """nb_tree._get_child() for dict"""
     tree = objects.full_tree()
-    if isinstance(expected, int):
-        nb_tree._join_data(data=data, tree=tree)
-        if isinstance(data, dict):
-            actual = data.get("id")
-            assert actual == expected
+    if isinstance(exp_object, int):
+        assert child["object"].get("id") is None
+
+    if isinstance(expected, (int, type(None))):
+        child_full = nb_tree._get_child(child=child, tree=tree)
+        actual = child_full.get("id")
+        assert actual == expected
+
+        if isinstance(exp_object, int):
+            actual = child["object"].get("id")
+            assert actual == exp_object
+
     else:
         with pytest.raises(expected):
-            nb_tree._join_data(data=data, tree=tree)
+            nb_tree._get_child(child=child, tree=tree)
 
 
-@pytest.mark.parametrize("data, expected", [
-    ([{"id": 9, "url": "/circuits/circuits/1"}, {"id": 9, "url": "/ipam/ip_addresses/2"}], [1, 2]),
-    ([{"id": 9}], [9]),
-    (["text"], []),
-])
-def test__join_data_list(data, expected):
-    """nb_tree._join_data() for list"""
-    tree = objects.full_tree()
-    nb_tree._join_data(data=data, tree=tree)
-    if expected:
-        for idx, expected_ in enumerate(expected):
-            actual = data[idx].get("id")
-            assert actual == expected_
+# noinspection DuplicatedCode
+def test__grow_tree__usual():
+    """nb_tree.grow_tree() usual dependency"""
+    # set up simplified objects
+    root = NbTree()
+    circuit = {k: v for k, v in objects.CIRCUIT1.items() if k in ["id", "url", "cid", "tenant"]}
+    root.circuits.circuits = {d["id"]: d for d in [circuit]}
+    tenant = {k: v for k, v in objects.TENANT1.items() if k in ["id", "url", "name", "tags"]}
+    root.tenancy.tenants = {d["id"]: d for d in [tenant]}
+    tag = {k: v for k, v in objects.TAG1.items() if k in ["id", "url", "name", "color"]}
+    root.extras.tags = {d["id"]: d for d in [tag]}
+
+    tree = nb_tree.grow_tree(tree=root)
+
+    assert tree.circuits.circuits[1]["tenant"]["tags"][0]["color"] == "aa1409"
+    assert tree.tenancy.tenants[1]["tags"][0]["color"] == "aa1409"
+    assert root.circuits.circuits[1]["tenant"].get("tags") is None
+    assert root.tenancy.tenants[1]["tags"][0].get("color") is None
 
 
-def test__grow_tree():
-    """nb_tree.grow_tree()"""
-    tree = objects.full_tree()
-    result = nb_tree.grow_tree(tree=tree)
-    c_terms = tree.circuits.circuit_terminations
-    c_circuits = tree.circuits.circuits
-    assert c_terms[1]["tags"][0].get("slug") is None
-    assert c_terms[1]["site"].get("slug") is None
-    assert c_terms[1]["circuit"].get("provider") is None
-    assert c_terms[1]["link_peers"][0]["device"].get("serial") is None
-    assert c_circuits[1]["termination_a"].get("term_side") is None
-    assert c_circuits[1]["termination_z"].get("term_side") is None
-    assert c_circuits[1]["termination_a"]["site"].get("tags") is None
+# noinspection DuplicatedCode
+def test__grow_tree__cable():
+    """nb_tree.grow_tree() cable dependency"""
+    # set up simplified objects
+    root = NbTree()
+    cable = {k: v for k, v in objects.CABLE2.items() if k in
+             ["id", "url", "display", "a_terminations"]}
+    root.dcim.cables = {d["id"]: d for d in [cable]}
+    interface = {k: v for k, v in objects.INTERFACE2.items() if
+                 k in ["id", "url", "device", "cable", "link_peers", "link_peers_type"]}
+    root.dcim.interfaces = {d["id"]: d for d in [interface]}
+    device = {k: v for k, v in objects.DEVICE1.items() if k in ["id", "url", "name", "tags"]}
+    root.dcim.devices = {d["id"]: d for d in [device]}
+    tag = {k: v for k, v in objects.TAG1.items() if k in ["id", "url", "color"]}
+    root.extras.tags = {d["id"]: d for d in [tag]}
 
-    c_terms = result.circuits.circuit_terminations
-    c_circuits = result.circuits.circuits
-    assert c_terms[1]["circuit"]["tags"][0]["slug"] == "tag1"
-    assert c_terms[1]["site"]["tags"][0]["slug"] == "tag1"
-    assert c_terms[1]["tags"][0]["slug"] == "tag1"
-    assert c_terms[1]["site"]["slug"] == "site1"
-    assert c_terms[1]["circuit"]["provider"]["tags"][0]["slug"] == "tag1"
-    assert c_terms[1]["link_peers"][0]["device"]["tags"][0]["slug"] == "tag1"
-    assert c_circuits[1]["termination_a"]["term_side"] == "A"
-    assert c_circuits[1]["termination_z"]["term_side"] == "Z"
-    assert c_circuits[1]["termination_a"]["site"]["tags"][0]["slug"] == "tag1"
+    tree = nb_tree.grow_tree(tree=root)
+
+    # cable
+    cable = tree.dcim.cables[2]
+    assert cable["a_terminations"][0]["object_id"] == 2
+    assert cable["a_terminations"][0]["object_type"] == "dcim.interface"
+    assert cable["a_terminations"][0]["object"]["cable"]["display"] == "#2"
+    # interface
+    interface = tree.dcim.interfaces[2]
+    assert interface["device"]["name"] == "DEVICE1"
+    assert interface["device"]["tags"][0]["color"] == "aa1409"
+    assert interface["cable"]["display"] == "#2"
+    assert interface["cable"]["a_terminations"][0]["object"]["id"] == 2
+    assert interface["link_peers_type"] == "dcim.interface"
+    assert interface["link_peers"][0]["a_terminations"][0]["object"]["cable"]["id"] == 2
+    # device
+    device = tree.dcim.devices[1]
+    assert device["tags"][0]["color"] == "aa1409"
+    # root
+    assert root.dcim.cables[2]["a_terminations"][0]["object"]["cable"] == 2
+    assert root.dcim.interfaces[2]["cable"].get("a_terminations") is None
+
+
+# noinspection DuplicatedCode
+def test__grow_tree__circuit_terminations():
+    """nb_tree.grow_tree() circuit_terminations dependency"""
+    # set up simplified objects
+    root = NbTree()
+    circuit = {k: v for k, v in objects.CIRCUIT1.items() if k in
+               ["id", "url", "cid", "termination_a"]}
+    root.circuits.circuits = {d["id"]: d for d in [circuit]}
+    term = {k: v for k, v in objects.TERMINATION1.items() if k in
+            ["id", "url", "display", "circuit", "cable", "link_peers", "link_peers_type"]}
+    root.circuits.circuit_terminations = {d["id"]: d for d in [term]}
+    cable = {k: v for k, v in objects.CABLE1.items() if k in
+             ["id", "url", "display", "a_terminations"]}
+    root.dcim.cables = {d["id"]: d for d in [cable]}
+    interface = {k: v for k, v in objects.INTERFACE1.items() if
+                 k in ["id", "url", "name", "device", "cable", "link_peers", "link_peers_type"]}
+    root.dcim.interfaces = {d["id"]: d for d in [interface]}
+    device = {k: v for k, v in objects.DEVICE1.items() if k in ["id", "url", "name", "tags"]}
+    root.dcim.devices = {d["id"]: d for d in [device]}
+    tag = {k: v for k, v in objects.TAG1.items() if k in ["id", "url", "color"]}
+    root.extras.tags = {d["id"]: d for d in [tag]}
+
+    tree = nb_tree.grow_tree(tree=root)
+
+    # circuit
+    circuit = tree.circuits.circuits[1]
+    assert circuit["cid"] == "CID1"
+    assert circuit["termination_a"]["circuit"]["termination_a"]["circuit"]["id"] == 1
+    # circuit_terminations
+    term = tree.circuits.circuit_terminations[1]
+    assert term["display"] == "CID1: Termination A"
+    assert term["circuit"]["cid"] == "CID1"
+    assert term["circuit"]["termination_a"]["circuit"]["cid"] == "CID1"
+    assert term["link_peers_type"] == "dcim.interface"
+    assert term["link_peers"][0]["name"] == "GigabitEthernet1/0/1"
+    assert term["link_peers"][0]["device"]["tags"][0]["color"] == "aa1409"
+    # interface
+    interface = tree.dcim.interfaces[1]
+    assert interface["name"] == "GigabitEthernet1/0/1"
+    assert interface["device"]["tags"][0]["color"] == "aa1409"
+    assert interface["cable"]["a_terminations"][0]["object_type"] == "circuits.circuittermination"
+    assert interface["cable"]["a_terminations"][0]["object"]["display"] == "CID1: Termination A"
+    assert interface["link_peers_type"] == "circuits.circuittermination"
+    assert interface["link_peers"][0]["display"] == "CID1: Termination A"
+    assert interface["link_peers"][0]["link_peers_type"] == "dcim.interface"
+    assert interface["link_peers"][0]["link_peers"][0]["name"] == "GigabitEthernet1/0/1"
+    assert interface["link_peers"][0]["link_peers"][0]["device"]["tags"][0]["color"] == "aa1409"
+    # device
+    device = tree.dcim.devices[1]
+    assert device["tags"][0]["color"] == "aa1409"
+    # root
+    assert root.dcim.cables[1]["a_terminations"][0]["object"]["cable"] == 1
+    assert root.dcim.interfaces[1]["cable"].get("a_terminations") is None
 
 
 @pytest.mark.parametrize("urls, expected, errors", [

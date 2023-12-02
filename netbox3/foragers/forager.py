@@ -1,4 +1,4 @@
-# pylint: disable=R0801
+# pylint: disable=R0801,R0902
 
 """Base for Foragers."""
 
@@ -10,12 +10,13 @@ from queue import Queue
 from threading import Thread
 from urllib.parse import urlparse, parse_qs
 
-from vhelpers import vstr
+from vhelpers import vlist, vstr
 
 from netbox3 import helpers as h
+from netbox3.branch.nb_branch import NbBranch
 from netbox3.nb_api import NbApi
 from netbox3.nb_tree import NbTree, missed_urls
-from netbox3.types_ import LDAny, DiDAny, LStr, LT2StrDAny, DList, LDList
+from netbox3.types_ import LDAny, DiDAny, LStr, LT2StrDAny, DList, LDList, TLists
 
 
 class Forager:
@@ -27,13 +28,17 @@ class Forager:
         :param forager_a: Parent forager.
         :type forager_a: CircuitsF or DcimF or IpamF or TenancyF
         """
-        self.app = h.attr_name(forager_a)
-        self.model = h.attr_name(self)
+        app = h.attr_name(forager_a)
+        model = h.attr_name(self)
+        self.app = app
+        self.model = model
         self.api: NbApi = forager_a.api
-        self.connector = getattr(getattr(self.api, self.app), self.model)
+        self.connector = getattr(getattr(self.api, app), model)
         # data
         self.root: NbTree = forager_a.root
-        self.data: DiDAny = getattr(getattr(self.root, self.app), self.model)
+        self.root_d: DiDAny = getattr(getattr(self.root, app), model)
+        self.tree: NbTree = forager_a.tree
+        self.tree_d: DiDAny = getattr(getattr(self.tree, app), model)
 
     def __repr__(self) -> str:
         """__repr__."""
@@ -62,27 +67,25 @@ class Forager:
 
         :rtype: int
         """
-        return len(self.data)
+        return len(self.root_d)
 
     # noinspection PyProtectedMember
-    def get(self, include_nested: bool = False, **kwargs) -> None:
+    def get(self, nested: bool = False, **kwargs) -> None:
         """Retrieve data from the Netbox.
 
         Request data based on the filter parameters (kwargs described in the
         NbApi connector) and save to the NbForager.root.
 
-        :param include_nested: `True` - Request base and nested objects,
+        :param bool nested: `True` - Request base and nested objects,
             `False` - Request only base objects. Default id `False`
-        :type include_nested: bool
 
         :param kwargs: Filtering parameters.
-        :type kwargs: dict
 
         :return: None. Update self object.
         """
         # Query main data
         nb_objects: LDAny = self._get_root_data_from_netbox(**kwargs)
-        if not include_nested:
+        if not nested:
             return
         urls: LStr = self._collect_nested_urls(nb_objects)
 
@@ -119,6 +122,51 @@ class Forager:
 
         self._save_results(results)
 
+    def find_root(self, **kwargs) -> LDAny:
+        """Find Netbox objects in NbForager.root by extended finding parameters.
+
+        :param kwargs: Extended filtering parameters.
+            Different parameters work like an ``AND`` operator.
+            Different values of the same parameter work like an ``OR`` operator.
+            Parameters with double underscores ``__`` will be split into a list of keys.
+
+        :return: Filtered Netbox objects.
+        """
+        return _find(objects=list(self.root_d.values()), **kwargs)
+
+    def find_rse(self, role: str = "", site: str = "", env: str = "", **kwargs) -> LDAny:
+        """Find Netbox objects in NbForager.tree by Role-Sile-Env finding parameters.
+
+        This method used in a specific project to simplify prefixes search.
+
+        :param role: ipam/role/slug value.
+        :param site: ipam/sile/slug value.
+        :param env: custom_fields/env value.
+        :param kwargs: Role-Sile-Env filtering parameters.
+
+        :return: Filtered Netbox objects.
+        """
+        params = {
+            "role__slug": str(role),
+            "site__slug": str(site),
+            "custom_fields__env": str(env),
+        }
+        params = {k: v for k, v in params.items() if v}
+        kwargs.update(params)
+        return _find(objects=list(self.tree_d.values()), **kwargs)
+
+    def find_tree(self, **kwargs) -> LDAny:
+        """Find Netbox objects in NbForager.tree by extended finding parameters.
+
+        :param kwargs: Extended filtering parameters.
+            Different parameters work like an ``AND`` operator.
+            Different values of the same parameter work like an ``OR`` operator.
+            Parameters with double underscores ``__`` will be split into a list of keys.
+
+        :return: Filtered Netbox objects.
+        """
+        return _find(objects=list(self.tree_d.values()), **kwargs)
+
     # ============================= helpers ==============================
 
     def _get_root_data_from_netbox(self, **kwargs) -> LDAny:
@@ -134,7 +182,7 @@ class Forager:
         nb_objects: LDAny = self.connector.get(**kwargs)
         nb_objects = self._validate_ids(nb_objects)
         for nb_object in nb_objects:
-            self.data[nb_object["id"]] = nb_object
+            self.root_d[nb_object["id"]] = nb_object
         return nb_objects
 
     @staticmethod
@@ -278,3 +326,37 @@ class Forager:
         app, model = h.path_to_attrs(path)
         data = getattr(getattr(self.root, app), model)
         return data
+
+
+def _find(objects: LDAny, **kwargs) -> LDAny:
+    """Find Netbox objects in tree by extended finding parameters.
+
+    :param objects: Netbox objects where searching is required using kwargs.
+    :param kwargs: Extended filtering parameters.
+    :return: Filtered Netbox objects.
+    """
+    if not kwargs:
+        return objects
+    (key, values), *key_values = list(kwargs.items())
+    if not isinstance(values, TLists):
+        values = [values]
+
+    objects_: LDAny = []
+    for data in objects:
+        keys = key.split("__")
+        if len(keys) <= 1:
+            keys = [key]
+        if keys[0] == "tags":
+            if len(keys) != 2:
+                raise ValueError(f"{keys=} {len(keys)=} expected 2.")
+            values_ = [d[keys[1]] for d in data["tags"]]
+            if vlist.is_in(values_, values):
+                objects_.append(data)
+        else:
+            value_ = NbBranch(data).any(*keys)
+            if value_ in values:
+                objects_.append(data)
+
+    if key_values:
+        objects_ = _find(objects=objects_, **dict(key_values))
+    return objects_

@@ -105,11 +105,6 @@ class NbCache:
 
         :return: None. Update pickle file.
         """
-        data = {
-            "tree": self.tree.model_dump(),
-            "status": self.status,
-        }
-
         os.umask(0)
         descriptor = os.open(
             path=self.cache,
@@ -117,12 +112,16 @@ class NbCache:
             mode=0o666,
         )
         with open(descriptor, "wb") as fh:
+            data = {
+                "tree": self.tree.model_dump(),
+                "status": self.status,
+            }
             pickle.dump(data, fh)
 
     def _read_cache(self) -> dict:
         """Read cached data from a pickle file.
 
-        :return: None. Update
+        :return: The dictionary data from a pickle file.
         """
         path = Path(self.cache)
         try:

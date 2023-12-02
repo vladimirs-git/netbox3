@@ -13,19 +13,13 @@ from netbox3.api import base_c
 from netbox3.exceptions import NbApiError
 from netbox3.nb_api import NbApi
 from netbox3.nb_forager import NbForager
-from netbox3.types_ import DAny, LDAny, SeqStr
+from netbox3.types_ import DAny, LDAny
 
 
 @pytest.fixture
 def api():
     """Init API"""
     return NbApi(host="netbox")
-
-
-@pytest.fixture
-def nbf() -> NbForager:
-    """Init NbForager."""
-    return NbForager(host="netbox")
 
 
 @pytest.fixture
@@ -125,27 +119,32 @@ def test__init_loners(loners, expected):
     assert actual == expected
 
 
-@pytest.mark.parametrize("items, denied, error", [
-    ([], [], None),
-    ([], ["a"], None),
-    ([{}], [], None),
-    ([{}], ["a"], None),
-    ([{"a": 1}], [], None),
-    ([{"a": 1}], ["a"], NbApiError),
-    ([{"b": 1}], ["a"], None),
+@pytest.mark.parametrize("items, expected", [
+    ([], None),
+    ([{"url": "ipam/prefixes/", "aggregate": {}}], NbApiError),
+    ([{"url": "ipam/prefixes/", "id": 1}], None),
 ])
-def test__check_keys(
-        api: NbApi,
-        items: LDAny,
-        denied: SeqStr,
-        error: Any,
-):
-    """BaseC._check_keys()."""
-    if error:
-        with pytest.raises(error):
-            api.ipam.ip_addresses._check_keys(items=items, denied=denied)
+def test__check_reserved_keys__ipam_prefixes(api: NbApi, items, expected: Any):
+    """BaseC._check_reserved_keys() ipam/prefixes/."""
+    if expected is None:
+        api.ipam.prefixes._check_reserved_keys(items=items)
     else:
-        api.ip_addresses._check_keys(items=items, denied=denied)
+        with pytest.raises(expected):
+            api.ipam.prefixes._check_reserved_keys(items=items)
+
+
+@pytest.mark.parametrize("items, expected", [
+    ([], None),
+    ([{"url": "dcim/devices/", "interfaces": {}}], NbApiError),
+    ([{"url": "dcim/devices/", "id": 1}], None),
+])
+def test__check_reserved_keys__dcim_devices(api: NbApi, items, expected: Any):
+    """BaseC._check_reserved_keys(). dcim/devices/"""
+    if expected is None:
+        api.dcim.devices._check_reserved_keys(items=items)
+    else:
+        with pytest.raises(expected):
+            api.dcim.devices._check_reserved_keys(items=items)
 
 
 @pytest.mark.parametrize("params_d, expected", [

@@ -8,7 +8,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger().addHandler(logging.StreamHandler())
 
 HOST = "demo.netbox.dev"
-TOKEN = "1a8424035853e078f9a65e06de9247249d26d5a1"
+TOKEN = "1234567890123456789012345678901234567890"
 nb = NbApi(host=HOST, token=TOKEN)
 
 # All objects
@@ -18,6 +18,50 @@ objects = nb.dcim.devices.get()
 objects = nb.dcim.devices.get(q=["DEVICE"])
 objects = nb.dcim.devices.get(tag="tag1")
 objects = nb.dcim.devices.get(or_tag=["tag1", "tag2"])
+
+# Location
+# Region
+# Site group
+# Site
+# Location
+# Rack
+
+# Operation
+# Status
+# Role
+# Airflow
+# Serial
+# Asset tag
+# MAC address
+
+# Hardware
+# Manufacturer
+# Model
+# Platform
+
+# Tenant
+# Tenant group
+# Tenant
+
+# Contacts
+# Contact
+# Contact Role
+# Contact Group
+
+# Components
+# Has console ports
+# Has console server ports
+# Has power ports
+# Has power outlets
+# Has interfaces
+# Has pass-through port
+
+# Miscellaneous
+# Has a primary IP
+# Has an OOB IP
+# Virtual chassis member
+# Config template
+# Has local config context data
 
 # Data Filter parameters
 objects = nb.dcim.devices.get(id=[1, 2])

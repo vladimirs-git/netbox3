@@ -4,6 +4,11 @@
 CHANGELOG
 =========
 
-0.1.7 (2023-11-23)
+0.1.9 (2023-12-02)
 ------------------
-* [new] init
+* [new] NbForager devices
+
+
+0.1.8 (2023-11-27)
+------------------
+* [new] NbForager.ip_addresses
