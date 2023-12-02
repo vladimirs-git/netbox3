@@ -2,6 +2,11 @@ netbox3
 =======
 
 
+.. note::
+
+   THIS PROJECT IS UNDER ACTIVE DEVELOPMENT.
+
+
 Philosophy
 ==========
 **netbox3** is designed to help in creating Netbox data as a multidimensional
