@@ -1,10 +1,6 @@
 netbox3
 =======
 
-.. note::
-
-   THIS PROJECT IS UNDER ACTIVE DEVELOPMENT.
-
 
 Philosophy
 ==========
