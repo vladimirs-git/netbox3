@@ -57,7 +57,7 @@ class NbApi:
         host: str,
         token: str = "",
         scheme: str = "https",
-        port: int = 0,  # Not implemented
+        port: int = 0,
         verify: bool = True,
         limit: int = 1000,
         url_length: int = 2047,
@@ -81,7 +81,8 @@ class NbApi:
 
         :param str scheme: Access method: `https` or `http`. Default is `https`.
 
-        :param int port: ``Not implemented`` TCP port. Default is `443`.
+        :param int port: TCP port.
+            Default is `443` for scheme=`https`, `80` for scheme=`http`.
 
         :param bool verify: Transport Layer Security.
             `True` - A TLS certificate required,

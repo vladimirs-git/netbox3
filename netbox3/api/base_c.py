@@ -15,6 +15,7 @@ from threading import Thread
 from typing import Callable
 from urllib.parse import urlencode, ParseResult
 
+import netports
 import requests
 from requests import Session, Response
 from requests.exceptions import ReadTimeout, ConnectionError as RequestsConnectionError
@@ -99,7 +100,8 @@ class BaseC:
 
         :param str scheme: Access method: `https` or `http`. Default is `https`.
 
-        :param int port: ``Not implemented`` TCP port. Default is `443`.
+        :param int port: TCP port.
+            Default is `443` for scheme=`https`, `80` for scheme=`http`.
 
         :param bool verify: Transport Layer Security.
             `True` - A TLS certificate required,
@@ -135,7 +137,7 @@ class BaseC:
         self.host: str = _init_host(**kwargs)
         self.token: str = str(kwargs.get("token") or "")
         self.scheme: str = _init_scheme(**kwargs)
-        self.port: int = int(kwargs.get("port") or 0)
+        self.port: int = _init_port(**kwargs)
         self.verify: bool = _init_verify(**kwargs)
         self.limit: int = int(kwargs.get("limit") or 1000)
         self.url_length = int(kwargs.get("url_length") or 2047)
@@ -170,7 +172,18 @@ class BaseC:
     @property
     def url_base(self) -> str:
         """Base URL without the application and model path."""
-        return f"{self.scheme}://{self.host}/api/"
+        port = 0
+        if self.scheme == "http":
+            if self.port != 80:
+                port = self.port
+        elif self.scheme == "https":
+            if self.port != 443:
+                port = self.port
+
+        url = f"{self.scheme}://{self.host}"
+        if port:
+            url += f":{port}"
+        return f"{url}/api/"
 
     # ============================== query ===============================
 
@@ -637,9 +650,22 @@ def _init_host(**kwargs) -> str:
     return host
 
 
+def _init_port(**kwargs) -> int:
+    """Init port."""
+    if port := int(kwargs.get("port") or 0):
+        if netports.check_port(port, strict=True):
+            return port
+
+    port = 443
+    scheme = str(kwargs.get("scheme") or "").lower()
+    if scheme == "http":
+        port = 80
+    return port
+
+
 def _init_scheme(**kwargs) -> str:
     """Init scheme: https or http."""
-    scheme = str(kwargs.get("scheme") or "")
+    scheme = str(kwargs.get("scheme") or "").lower()
     expected = ["https", "http"]
     if scheme not in expected:
         raise ValueError(f"{scheme=}, {expected=}")

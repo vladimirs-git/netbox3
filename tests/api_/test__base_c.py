@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 import requests_mock
 from _pytest.monkeypatch import MonkeyPatch
+from netports import NetportsValueError
 from requests import Response, Session
 from requests_mock import Mocker
 
@@ -48,8 +49,16 @@ def mock_session(status_code: int, content: str = ""):
 
 @pytest.mark.parametrize("params, expected", [
     ({"host": "netbox"}, "https://netbox/api/circuits/circuit-terminations/"),
-    ({"host": "netbox", "scheme": "https"}, "https://netbox/api/circuits/circuit-terminations/"),
     ({"host": "netbox", "scheme": "http"}, "http://netbox/api/circuits/circuit-terminations/"),
+    ({"host": "netbox", "scheme": "http", "port": 80},
+     "http://netbox/api/circuits/circuit-terminations/"),
+    ({"host": "netbox", "scheme": "http", "port": 1},
+     "http://netbox:1/api/circuits/circuit-terminations/"),
+    ({"host": "netbox", "scheme": "https"}, "https://netbox/api/circuits/circuit-terminations/"),
+    ({"host": "netbox", "scheme": "https", "port": 443},
+     "https://netbox/api/circuits/circuit-terminations/"),
+    ({"host": "netbox", "scheme": "https", "port": 1},
+     "https://netbox:1/api/circuits/circuit-terminations/"),
 ])
 def test__url(params, expected):
     """BaseC.url."""
@@ -64,8 +73,12 @@ def test__url(params, expected):
 
 @pytest.mark.parametrize("params, expected", [
     ({"host": "netbox"}, "https://netbox/api/"),
-    ({"host": "netbox", "scheme": "https"}, "https://netbox/api/"),
     ({"host": "netbox", "scheme": "http"}, "http://netbox/api/"),
+    ({"host": "netbox", "scheme": "http", "port": 80}, "http://netbox/api/"),
+    ({"host": "netbox", "scheme": "http", "port": 1}, "http://netbox:1/api/"),
+    ({"host": "netbox", "scheme": "https"}, "https://netbox/api/"),
+    ({"host": "netbox", "scheme": "https", "port": 443}, "https://netbox/api/"),
+    ({"host": "netbox", "scheme": "https", "port": 1}, "https://netbox:1/api/"),
 ])
 def test__url_base(params, expected):
     """BaseC.url_base."""
@@ -219,11 +232,41 @@ def test__init_host(kwargs, expected: Any):
 
 
 @pytest.mark.parametrize("kwargs, expected", [
+    ({}, 443),
+    ({"port": ""}, 443),
+    ({"port": 0}, 443),
+    ({"port": -1}, NetportsValueError),
+    ({"port": 1}, 1),
+    ({"port": "1"}, 1),
+    ({"scheme": "typo"}, 443),
+    ({"scheme": "http"}, 80),
+    ({"scheme": "HTTP"}, 80),
+    ({"scheme": "https"}, 443),
+    ({"scheme": "HTTPs"}, 443),
+    ({"scheme": "http", "port": "1"}, 1),
+    ({"scheme": "http", "port": 1}, 1),
+    ({"scheme": "https", "port": "1"}, 1),
+    ({"scheme": "https", "port": 1}, 1),
+    ({"scheme": "typo", "port": "1"}, 1),
+])
+def test__init_port(kwargs, expected: Any):
+    """base_c._init_port()"""
+    if isinstance(expected, int):
+        actual = base_c._init_port(**kwargs)
+        assert actual == expected
+    else:
+        with pytest.raises(expected):
+            base_c._init_port(**kwargs)
+
+
+@pytest.mark.parametrize("kwargs, expected", [
     ({}, ValueError),
     ({"scheme": ""}, ValueError),
     ({"scheme": "typo"}, ValueError),
-    ({"scheme": "https"}, "https"),
     ({"scheme": "http"}, "http"),
+    ({"scheme": "HTTP"}, "http"),
+    ({"scheme": "https"}, "https"),
+    ({"scheme": "HTTPs"}, "https"),
 ])
 def test__init_scheme(kwargs, expected: Any):
     """base_c._init_scheme()"""

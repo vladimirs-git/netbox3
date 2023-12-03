@@ -15,7 +15,8 @@ make these getting and assembling tasks simpler.
 
 The Netbox database is like the root of a tree, with its branches all intertwined.
 The REST API provides data in a simplified form, akin to timber.
-netbox3 growing data tree, intertwining data to match the WEB UI structure.
+NbForager is requesting root data from Netbox using NbApi and intertwining it into
+NbForager.tree data to align with the structure of the WEB UI.
 
 
 ----------------------------------------------------------------------------------------

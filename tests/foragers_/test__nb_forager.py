@@ -92,7 +92,7 @@ def test__init(nbf: NbForager):
     assert nbf.api.ipam.aggregates.host == "netbox"
     assert nbf.api.ipam.aggregates.token == ""
     assert nbf.api.ipam.aggregates.scheme == "https"
-    assert nbf.api.ipam.aggregates.port == 0
+    assert nbf.api.ipam.aggregates.port == 443
     assert nbf.api.ipam.aggregates.verify is True
     assert nbf.api.ipam.aggregates.limit == 1000
     assert nbf.api.ipam.aggregates.url_length == 2047
