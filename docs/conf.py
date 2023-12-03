@@ -10,7 +10,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 project = "netbox3"
 copyright = "2023, Vladimirs Prusakovs"
 author = "Vladimirs Prusakovs"
-release = "0.1.10"
+release = "0.1.11"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -18,7 +18,6 @@ release = "0.1.10"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosectionlabel",
-    "sphinxnotes.strike",
 ]
 
 templates_path = ["_templates"]

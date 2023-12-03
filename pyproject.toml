@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "netbox3"
-version = "0.1.10"
-description = "Python package to work with Netbox using REST API. Help in creating Netbox data as a multidimensional dictionary and representing data similarly to the WEB UI."
+version = "0.1.11"
+description = "Python package designed to assist in working with the Netbox REST API. The filter parameters are identical to those in the Web UI filter form. It replaces brief data with full information, and Netbox objects are represented as a recursive multidimensional dictionary."
 authors = ["Vladimirs Prusakovs <vladimir.prusakovs@gmail.com>"]
 readme = "README.rst"
 license = "Apache-2.0"
@@ -52,7 +52,7 @@ test = ["pytest"]
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/vladimirs-git/netbox3/issues"
-"Download URL" = "https://github.com/vladimirs-git/netbox3/archive/refs/tags/0.1.10.tar.gz"
+"Download URL" = "https://github.com/vladimirs-git/netbox3/archive/refs/tags/0.1.11.tar.gz"
 
 
 [tool.mypy]

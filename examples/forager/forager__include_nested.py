@@ -1,4 +1,4 @@
-"""Examples NbForager.grow_tree() join devices."""
+"""Examples NbForager.join_tree() join devices."""
 import logging
 from pprint import pprint
 
@@ -27,7 +27,7 @@ print(f"{len(nbf.root.extras.tags)=}")
 
 # Assemble objects within self.
 # Note that the device includes all other objects as multidimensional dictionary.
-tree = nbf.grow_tree()
+tree = nbf.join_tree()
 pprint(list(tree.dcim.devices.values())[0])
 # {"id": 1,
 #  "name": "dmi01-akron-rtr01",

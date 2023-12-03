@@ -224,7 +224,7 @@ def insert_tree(src: NbTree, dst: NbTree) -> None:
             dst_d.update(src_d)
 
 
-def grow_tree(tree: NbTree) -> NbTree:
+def join_tree(tree: NbTree) -> NbTree:
     """Assemble Netbox objects in tree within itself.
 
     The Netbox objects are represented as a multidimensional dictionary.

@@ -199,7 +199,7 @@ def test__count(nbf: NbForager):
 def test__clear(nbf: NbForager):
     """NbForager.clear()."""
     nbf.root.ipam.vrfs.update(objects.vrf_d([1]))
-    nbf.grow_tree()
+    nbf.join_tree()
     assert [d["id"] for d in nbf.root.ipam.vrfs.values()] == [1]
     assert [d["id"] for d in nbf.tree.ipam.vrfs.values()] == [1]
 
@@ -264,13 +264,13 @@ def test__get_status(nbf: NbForager):
         assert actual == {"netbox-version": "3.6.5"}
 
 
-def test__grow_tree(nbf_r: NbForager):
-    """NbForager.grow_tree()."""
+def test__join_tree(nbf_r: NbForager):
+    """NbForager.join_tree()."""
     assert nbf_r.tree.ipam.aggregates == {}
     assert nbf_r.tree.ipam.prefixes == {}
     assert nbf_r.tree.ipam.ip_addresses == {}
 
-    tree: NbTree = nbf_r.grow_tree(extra=False)
+    tree: NbTree = nbf_r.join_tree(extra=False)
 
     aggregate = tree.ipam.aggregates[1]
     assert aggregate["tenant"]["tags"][0]["name"] == "TAG1"
@@ -284,7 +284,7 @@ def test__grow_tree(nbf_r: NbForager):
     device = tree.dcim.devices[1]
     assert device.get("interfaces") is None
 
-    tree = nbf_r.grow_tree(extra=True)
+    tree = nbf_r.join_tree(extra=True)
 
     aggregate = tree.ipam.aggregates[1]
     assert aggregate["tenant"]["tags"][0]["name"] == "TAG1"

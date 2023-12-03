@@ -2,35 +2,16 @@ netbox3
 =======
 
 
-Philosophy
-==========
-**netbox3** is designed to help in creating Netbox data as a multidimensional
-dictionary and representing data similarly to the WEB UI.
-
-I have made many Python scripts, each with a common goal:
-getting objects from the Netbox database and assembling them together
-in a structure that looks like the database itself. Getting and assembling,
-getting and assembling, with some additional steps. The main aim of this project is to
-make these getting and assembling tasks simpler.
-
-The Netbox database is like the root of a tree, with its branches all intertwined.
-The REST API provides data in a simplified form, akin to timber.
-NbForager is requesting root data from Netbox using NbApi and intertwining it into
-NbForager.tree data to align with the structure of the WEB UI.
-
-
-----------------------------------------------------------------------------------------
-
 Overview
 ========
 
-**netbox3** comprises t\ :strike:`h`\ ree Python tools designed for working with
-`Netbox`_ using the REST API. Checked with Python >= 3.8, Netbox >= v3.6.
+Python package designed to help work with the `Netbox`_ REST API.
 
-- :ref:`NbApi` Request data from Netbox using filter parameters identical to those in the web interface filter form. Filter parameters using the ``OR`` operator.
-- :ref:`NbForager` Assemble Netbox objects within itself, represent them as a multidimensional dictionary.
-- :ref:`NbBranch` Extract the typed values from a Netbox object dictionary by using a chain of keys.
+- :ref:`NbApi` Request data from Netbox using filter parameters identical to those in the Web UI filter form. Filter parameters use the ``OR`` operator.
+- :ref:`NbForager` The REST API returns objects that contain a brief representation of related objects. NbForager replaces brief data with full and objects look like a recursive multidimensional dictionary.
+- :ref:`NbBranch` Extract typed values from a Netbox object dictionary by using a chain of keys.
 
+Checked with Python >= 3.8, Netbox >= v3.6.
 This project on `GitHub`_.
 
 
@@ -94,7 +75,7 @@ Assemble multidimensional dictionary.
 
 
     # Assemble objects within self as multidimensional dictionary.
-    tree = nbf.grow_tree()
+    tree = nbf.join_tree()
     pprint(list(tree.dcim.devices.values())[0])
     # {"id": 1,
     #  "name": "dmi01-akron-rtr01",
@@ -140,7 +121,7 @@ Request objects using filtering parameters. Assemble multidimensional dictionary
 
     # Assemble objects within self as multidimensional dictionary.
     # Note that the device now includes site region and all other data.
-    tree = nbf.grow_tree()
+    tree = nbf.join_tree()
     device = tree.dcim.devices[88]
     pprint(device)
     # {"id": 88,

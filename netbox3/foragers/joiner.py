@@ -1,4 +1,4 @@
-"""Gardener."""
+"""Joiner."""
 from operator import itemgetter
 
 from netports import Intf
@@ -10,19 +10,19 @@ from netbox3.nb_tree import NbTree
 from netbox3.types_ import LDAny, DAny, LStr, DiDAny, LInt, DiLDAny
 
 
-class Gardener:
+class Joiner:
     """Helper methods are used to create additional keys in Netbox objects,
 
     representing them similarly to the WEB UI.
     """
 
     def __init__(self, tree: NbTree):
-        """Init Gardener.
+        """Init Joiner.
         :param NbTree tree: Contains Netbox that need to be updated similar to the WEB UI.
         """
         self.tree = tree
 
-    def grow_dcim_devices(self) -> None:
+    def join_dcim_devices(self) -> None:
         """Create additional keys to represent dcim.devices similar to the WEB UI.
 
         Add console_ports, console_server_ports, device_bays, front_ports, interfaces,
@@ -31,19 +31,19 @@ class Gardener:
 
         :return: None. Update NbTree object.
         """
-        self._grow_devices(app="dcim")
+        self._join_devices(app="dcim")
 
-    def grow_virtualization_virtual_machines(self) -> None:
+    def join_virtualization_virtual_machines(self) -> None:
         """Create additional keys to represent virtualization.virtual_machines.
 
         Add interfaces in virtualization.virtual_machines.
 
         :return: None. Update NbTree object.
         """
-        self._grow_devices(app="virtualization")
+        self._join_devices(app="virtualization")
 
     # noinspection PyProtectedMember
-    def _grow_devices(self, app: str) -> None:
+    def _join_devices(self, app: str) -> None:
         """Create additional keys to represent devices/VM similar to the WEB UI.
 
         :param app: Application name: "dcim", "virtualization"
@@ -83,7 +83,7 @@ class Gardener:
                 if model in device_:
                     device_[model][name] = port
 
-    def grow_ipam_ipv4(self) -> None:
+    def join_ipam_ipv4(self) -> None:
         """Create additional keys to represent ipam similar to the WEB UI.
 
             Add ipv4, aggregate, super_prefix, sub_prefixes, ip_addresses
@@ -92,10 +92,10 @@ class Gardener:
         :return: None. Update NbTree object.
         """
         self._init_ipam_keys()
-        self._grow_ipam_aggregates()
-        self._grow_ipam_prefixes()
-        self._grow_ipam_ip_addresses()
-        self._grow_update_sub_prefixes()
+        self._join_ipam_aggregates()
+        self._join_ipam_prefixes()
+        self._join_ipam_ip_addresses()
+        self._join_update_sub_prefixes()
 
     def _init_ipam_keys(self) -> None:
         """Init extra keys that are required for aggregates, prefixes, ip_addresses."""
@@ -113,7 +113,7 @@ class Gardener:
                 data["sub_prefixes"] = []
                 data["ip_addresses"] = []
 
-    def _grow_ipam_aggregates(self) -> None:
+    def _join_ipam_aggregates(self) -> None:
         """Add prefixes to tree.ipam.aggregates.sub_prefixes."""
         aggregates: LDAny = self._get_aggregates_ip4()
         prefixes_d: DiLDAny = self._get_prefixes_ip4_d()
@@ -127,7 +127,7 @@ class Gardener:
                         if depth == 0:
                             aggregate["sub_prefixes"].append(prefix)
 
-    def _grow_ipam_ip_addresses(self) -> None:
+    def _join_ipam_ip_addresses(self) -> None:
         """Add prefixes to tree.ipam.ip-addresses.super_prefix."""
         ip_addresses: LDAny = self._get_ip_addresses_ip4()
         prefixes_d: DiLDAny = self._get_prefixes_ip4_d()
@@ -150,7 +150,7 @@ class Gardener:
                     added_addresses.append(ip_address)
             ip_addresses = [d for d in ip_addresses if d not in added_addresses]
 
-    def _grow_ipam_prefixes(self) -> None:
+    def _join_ipam_prefixes(self) -> None:
         """Add prefixes to tree.ipam.prefixes.sub_prefixes, super_prefix"""
         super_prefixes = []
         prefixes_d: DiLDAny = self._get_prefixes_ip4_d()
@@ -167,7 +167,7 @@ class Gardener:
                         sub_prefix["super_prefix"] = super_prefix
             super_prefixes = sub_prefixes
 
-    def _grow_update_sub_prefixes(self) -> None:
+    def _join_update_sub_prefixes(self) -> None:
         """Update sub_prefixes in ipam.aggregates and ipam.prefixes.
 
         Remove duplicates, remove objects with improper depth, sort by IPv4.

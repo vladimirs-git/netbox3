@@ -1,4 +1,4 @@
-"""Examples NbForager.grow_tree() bulk of objects."""
+"""Examples NbForager.join_tree() bulk of objects."""
 import logging
 from datetime import datetime
 
@@ -23,5 +23,5 @@ nbf.circuits.circuit_terminations.get(nested=True)
 seconds = (datetime.now() - start).seconds
 print(f"{seconds=}")
 print(f"NbForager.root devices={len(nbf.root.dcim.devices)} objects={nbf.root.count()}")
-nbf.grow_tree()
+nbf.join_tree()
 print(f"NbForager.tree devices={len(nbf.tree.dcim.devices)} objects={nbf.tree.count()}")

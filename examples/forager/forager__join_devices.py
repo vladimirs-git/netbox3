@@ -1,4 +1,4 @@
-"""Examples NbForager.grow_tree() join devices."""
+"""Examples NbForager.join_tree() join devices."""
 from pprint import pprint
 
 from netbox3 import NbForager
@@ -20,7 +20,7 @@ pprint(nbf.root.dcim.devices)
 
 # Assemble objects within self.
 # Note that the device now includes site region and all other data.
-tree = nbf.grow_tree()
+tree = nbf.join_tree()
 pprint(tree.dcim.devices)
 # {88: {"id": 88,
 #       "name": "PP:B117",

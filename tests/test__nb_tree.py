@@ -114,8 +114,8 @@ def test__get_child(child: Any, expected: Any, exp_object):
 
 
 # noinspection DuplicatedCode
-def test__grow_tree__usual():
-    """nb_tree.grow_tree() usual dependency"""
+def test__join_tree__usual():
+    """nb_tree.join_tree() usual dependency"""
     # set up simplified objects
     root = NbTree()
     circuit = {k: v for k, v in objects.CIRCUIT1.items() if k in ["id", "url", "cid", "tenant"]}
@@ -125,7 +125,7 @@ def test__grow_tree__usual():
     tag = {k: v for k, v in objects.TAG1.items() if k in ["id", "url", "name", "color"]}
     root.extras.tags = {d["id"]: d for d in [tag]}
 
-    tree = nb_tree.grow_tree(tree=root)
+    tree = nb_tree.join_tree(tree=root)
 
     assert tree.circuits.circuits[1]["tenant"]["tags"][0]["color"] == "aa1409"
     assert tree.tenancy.tenants[1]["tags"][0]["color"] == "aa1409"
@@ -134,8 +134,8 @@ def test__grow_tree__usual():
 
 
 # noinspection DuplicatedCode
-def test__grow_tree__cable():
-    """nb_tree.grow_tree() cable dependency"""
+def test__join_tree__cable():
+    """nb_tree.join_tree() cable dependency"""
     # set up simplified objects
     root = NbTree()
     cable = {k: v for k, v in objects.CABLE2.items() if k in
@@ -149,7 +149,7 @@ def test__grow_tree__cable():
     tag = {k: v for k, v in objects.TAG1.items() if k in ["id", "url", "color"]}
     root.extras.tags = {d["id"]: d for d in [tag]}
 
-    tree = nb_tree.grow_tree(tree=root)
+    tree = nb_tree.join_tree(tree=root)
 
     # cable
     cable = tree.dcim.cables[2]
@@ -173,8 +173,8 @@ def test__grow_tree__cable():
 
 
 # noinspection DuplicatedCode
-def test__grow_tree__circuit_terminations():
-    """nb_tree.grow_tree() circuit_terminations dependency"""
+def test__join_tree__circuit_terminations():
+    """nb_tree.join_tree() circuit_terminations dependency"""
     # set up simplified objects
     root = NbTree()
     circuit = {k: v for k, v in objects.CIRCUIT1.items() if k in
@@ -194,7 +194,7 @@ def test__grow_tree__circuit_terminations():
     tag = {k: v for k, v in objects.TAG1.items() if k in ["id", "url", "color"]}
     root.extras.tags = {d["id"]: d for d in [tag]}
 
-    tree = nb_tree.grow_tree(tree=root)
+    tree = nb_tree.join_tree(tree=root)
 
     # circuit
     circuit = tree.circuits.circuits[1]

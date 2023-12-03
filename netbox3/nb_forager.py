@@ -17,7 +17,7 @@ from netbox3.foragers.circuits import CircuitsAF
 from netbox3.foragers.core import CoreAF
 from netbox3.foragers.dcim import DcimAF
 from netbox3.foragers.extras import ExtrasAF
-from netbox3.foragers.gardener import Gardener
+from netbox3.foragers.joiner import Joiner
 from netbox3.foragers.ipam import IpamAF
 from netbox3.foragers.tenancy import TenancyAF
 from netbox3.foragers.users import UsersAF
@@ -238,7 +238,7 @@ class NbForager:
             status = {}
         self.status = status
 
-    def grow_tree(self, extra=True) -> NbTree:
+    def join_tree(self, extra=True) -> NbTree:
         """Assemble Netbox objects in NbForager.tree within itself.
 
         The Netbox objects are represented as a multidimensional dictionary.
@@ -256,13 +256,13 @@ class NbForager:
 
         :rtype: NbTree
         """
-        tree = nb_tree.grow_tree(self.root)
+        tree = nb_tree.join_tree(self.root)
         nb_tree.insert_tree(src=tree, dst=self.tree)
 
         if extra:
-            gardener = Gardener(tree=self.tree)
-            gardener.grow_dcim_devices()
-            gardener.grow_ipam_ipv4()
+            joiner = Joiner(tree=self.tree)
+            joiner.join_dcim_devices()
+            joiner.join_ipam_ipv4()
         return self.tree
 
     def read_cache(self) -> None:

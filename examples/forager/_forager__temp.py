@@ -15,7 +15,7 @@ nbf = NbForager(host=HOST, token=TOKEN, threads=10)
 nbf.ipam.aggregates.get()
 nbf.ipam.prefixes.get()
 nbf.ipam.ip_addresses.get()
-nbf.grow_tree()
+nbf.join_tree()
 
 aggregate = nbf.ipam.aggregates.find_tree(family__value=4)[0]
 print(f"aggregate ipv4: ", aggregate["ipv4"])
