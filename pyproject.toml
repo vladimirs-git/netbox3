@@ -1,7 +1,10 @@
 [tool.poetry]
 name = "netbox3"
 version = "0.1.9"
-description = "Python package to work with Netbox using REST API"
+description = """Python package to work with Netbox using REST API.
+Help in creating Netbox data as a multidimensional dictionary and
+representing data similarly to the WEB UI.
+"""
 authors = ["Vladimirs Prusakovs <vladimir.prusakovs@gmail.com>"]
 readme = "README.rst"
 license = "Apache-2.0"
