@@ -132,6 +132,7 @@ dmypy.json
 
 # Temp
 **/*.log
-tmp/
-temp/
 _notes/
+evo/
+temp/
+tmp/
