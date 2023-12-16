@@ -36,7 +36,11 @@ def data(path: str) -> DParamPath:
         "provider": ParamPath(param="provider", path="circuits/providers/"),
         "provider_account": ParamPath(param="provider_account", path="circuits/provider-accounts/"),
         # dcim
+        "device_type": ParamPath(param="device_type", path="dcim/device-types/", key="model"),
+        "location": ParamPath(param="location", path="dcim/locations/"),
+        "manufacturer": ParamPath(param="manufacturer", path="dcim/manufacturers/"),
         "platform": ParamPath(param="platform", path="dcim/platforms/"),
+        "rack": ParamPath(param="rack", path="dcim/racks/"),
         "region": ParamPath(param="region", path="dcim/regions/"),
         "site": ParamPath(param="site", path="dcim/sites/"),
         "site_group": ParamPath(param="site_group", path="dcim/site-groups/"),
@@ -91,7 +95,11 @@ def data(path: str) -> DParamPath:
         result.update(data_)
 
     # role
-    if path.startswith("ipam/"):
+    if path.startswith("dcim/devices/"):
+        result["role"] = ParamPath(param="role", path="dcim/device-roles/")
+    elif path.startswith("dcim/racks/"):
+        result["role"] = ParamPath(param="role", path="dcim/rack-roles/")
+    elif path.startswith("ipam/"):
         result["role"] = ParamPath(param="role", path="ipam/roles/")
     elif path == "virtualization/virtual-machines/":
         result["role"] = ParamPath(param="role", path="dcim/device-roles/")
@@ -114,6 +122,8 @@ def need_change(params_d: DList, mapping: DParamPath) -> DList:
     need_change_d: DList = {}
 
     for key, values in params_d.items():
+        if key.startswith("or_"):
+            key = key.replace("or_", "", 1)
         if key not in mapping:
             continue
         if key in ["vrf", "present_in_vrf"]:

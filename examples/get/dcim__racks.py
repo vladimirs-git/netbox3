@@ -29,6 +29,7 @@ objects = nb.dcim.racks.get(site_id=[1, 2])
 
 # Function
 objects = nb.dcim.racks.get(status=["planned"])
+objects = nb.dcim.racks.get(role=["RACK ROLE1", "RACK ROLE2"])
 
 # Hardware
 

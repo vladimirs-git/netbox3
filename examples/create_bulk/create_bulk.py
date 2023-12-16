@@ -417,6 +417,124 @@ def create__dcim__interfaces():
 
 
 # noinspection DuplicatedCode
+def create__dcim__console_ports():
+    """Create /dcim/console-ports objects."""
+    for idx_ in range(1, COUNT + 1):
+        device_name = f"{DEVICE}{idx_}"
+        device_id = nb.dcim.devices.get(name=device_name)[0]["id"]
+
+        for idx in range(1, COUNT + 1):
+            name = f"CONSOLE PORT{idx}"
+            if not nb.dcim.console_ports.get(name=name, device=device_name):
+                response = nb.dcim.console_ports.create(
+                    device=device_id,
+                    name=name,
+                )
+                print(response)
+
+            response = nb.dcim.console_ports.update(
+                id=nb.dcim.console_ports.get(name=name, device=device_name)[0]["id"],
+                device=device_id,
+                # Module,
+                label=f"label{idx}",
+                type="rj-45",
+                speed=9600,
+                description=f"{DESCRIPTION}{idx}",
+                tags=[nb.extras.tags.get(name=f"{TAG}{idx}")[0]["id"]],
+            )
+            print(response)
+
+
+# noinspection DuplicatedCode
+def create__dcim__console_server_ports():
+    """Create /dcim/console-server-ports objects."""
+    for idx_ in range(1, COUNT + 1):
+        device_name = f"{DEVICE}{idx_}"
+        device_id = nb.dcim.devices.get(name=device_name)[0]["id"]
+
+        for idx in range(1, COUNT + 1):
+            name = f"CONSOLE SERVER PORT{idx}"
+            if not nb.dcim.console_server_ports.get(name=name, device=device_name):
+                response = nb.dcim.console_server_ports.create(
+                    device=device_id,
+                    name=name,
+                )
+                print(response)
+
+            response = nb.dcim.console_server_ports.update(
+                id=nb.dcim.console_server_ports.get(name=name, device=device_name)[0]["id"],
+                device=device_id,
+                # Module,
+                label=f"label{idx}",
+                type="rj-45",
+                speed=9600,
+                description=f"{DESCRIPTION}{idx}",
+                tags=[nb.extras.tags.get(name=f"{TAG}{idx}")[0]["id"]],
+            )
+            print(response)
+
+
+# noinspection DuplicatedCode
+def create__dcim__power_ports():
+    """Create /dcim/power-ports objects."""
+    for idx_ in range(1, COUNT + 1):
+        device_name = f"{DEVICE}{idx_}"
+        device_id = nb.dcim.devices.get(name=device_name)[0]["id"]
+
+        for idx in range(1, COUNT + 1):
+            name = f"POWER PORT{idx}"
+            if not nb.dcim.power_ports.get(name=name, device=device_name):
+                response = nb.dcim.power_ports.create(
+                    device=device_id,
+                    name=name,
+                )
+                print(response)
+
+            response = nb.dcim.power_ports.update(
+                id=nb.dcim.power_ports.get(name=name, device=device_name)[0]["id"],
+                device=device_id,
+                # Module,
+                label=f"label{idx}",
+                type="iec-60320-c6",
+                maximum_draw=1,
+                allocated_draw=1,
+                mark_connected=True,
+                description=f"{DESCRIPTION}{idx}",
+                tags=[nb.extras.tags.get(name=f"{TAG}{idx}")[0]["id"]],
+            )
+            print(response)
+
+
+# noinspection DuplicatedCode
+def create__dcim__power_outlets():
+    """Create /dcim/power-outlets objects."""
+    for idx_ in range(1, COUNT + 1):
+        device_name = f"{DEVICE}{idx_}"
+        device_id = nb.dcim.devices.get(name=device_name)[0]["id"]
+
+        for idx in range(1, COUNT + 1):
+            name = f"POWER OUTLET{idx}"
+            if not nb.dcim.power_outlets.get(name=name, device=device_name):
+                response = nb.dcim.power_outlets.create(
+                    device=device_id,
+                    name=name,
+                )
+                print(response)
+
+            response = nb.dcim.power_outlets.update(
+                id=nb.dcim.power_outlets.get(name=name, device=device_name)[0]["id"],
+                device=device_id,
+                label=f"label{idx}",
+                type="iec-60320-c5",
+                feed_leg="A",
+                mark_connected=True,
+                description=f"{DESCRIPTION}{idx}",
+                tags=[nb.extras.tags.get(name=f"{TAG}{idx}")[0]["id"]],
+            )
+            print(response)
+
+
+# noinspection DuplicatedCode
 def create__dcim__platforms():
     """Create /dcim/platforms objects."""
     for idx in range(1, COUNT + 1):
@@ -1337,6 +1455,10 @@ if __name__ == "__main__":
     create__dcim__platforms()  # manufacturers, config_templates
     create__dcim__devices()  # sites, racks, platforms, ip_addresses
     create__dcim__interfaces()  # devices, vlans
+    create__dcim__console_ports()  # devices
+    create__dcim__console_server_ports()  # devices
+    create__dcim__power_ports()  # devices
+    create__dcim__power_outlets()  # devices
 
     # 7 virtualization
     create__virtualization__cluster_groups()  # tags

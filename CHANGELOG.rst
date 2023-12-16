@@ -4,6 +4,13 @@
 CHANGELOG
 =========
 
+0.1.13 (2023-12-16)
+-------------------
+* [change] _get_keys_need_split(), "^q$" > "q"
+* [fix] NbApi._init_loners()
+* [fix] param_path.data() role: dcim/devices/, dcim/racks/
+
+
 0.1.12 (2023-12-05)
 -------------------
 * [fix] netports-0.12.1

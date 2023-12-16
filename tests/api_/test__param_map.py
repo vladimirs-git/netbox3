@@ -17,12 +17,19 @@ def test__param_map():
 
 
 def test__data():
-    """param_map.data()."""
+    """param_map.data() role."""
+    # dcim devices
+    data = param_path.data(path="dcim/devices/")
+    assert data["role"].path == "dcim/device-roles/"
+    # dcim devices
+    data = param_path.data(path="dcim/racks/")
+    assert data["role"].path == "dcim/rack-roles/"
+    # dcim
     data = param_path.data(path="dcim/sites/")
     assert data["circuit"].key == "cid"
     assert data["group"].path == "dcim/site-groups/"
     assert data.get("role") is None
-
+    # ipam
     data = param_path.data(path="ipam/ip-addresses/")
     assert data["circuit"].key == "cid"
     assert data.get("group") is None
@@ -31,12 +38,15 @@ def test__data():
 
 @pytest.mark.parametrize("params_d, expected", [
     ({}, {}),
-    ({"a": [1]}, {}),
+    ({"typo": [1]}, {}),
     ({"vrf": ["null"]}, {}),
     ({"vrf": ["a"]}, {"vrf": ["a"]}),
     ({"vrf": ["a", "null"]}, {"vrf": ["a", "null"]}),
     ({"present_in_vrf": ["a"]}, {"present_in_vrf": ["a"]}),
     ({"present_in_vrf": ["null"]}, {}),
+    ({"circuit": ["CID1"]}, {"circuit": ["CID1"]}),
+    ({"or_circuit": ["CID1"]}, {"circuit": ["CID1"]}),
+    ({"or_typo": ["CID1"]}, {}),
 ])
 def test__need_change(params_d, expected):
     """param_map.need_change()."""

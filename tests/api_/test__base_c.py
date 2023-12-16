@@ -113,8 +113,16 @@ def test__init_default_get(default_get, expected):
     assert actual == expected
 
 
+def test__loners(api: NbApi):
+    """BaseC._loners default."""
+    assert api.dcim.devices._loners == ["q", "airflow"]
+    assert api.ipam.aggregates._loners == ["q", "prefix"]
+    assert api.ipam.prefixes._loners == ["q", "within_include"]
+    assert api.ipam.ip_addresses._loners == ["q"]
+
+
 @pytest.mark.parametrize("loners, expected", [
-    ({}, ["^q$", "^prefix$"]),
+    ({}, ["q", "prefix"]),
     ({"any": ["a1"], "ipam/aggregates/": ["a2"], "ipam/prefixes/": ["a3"]}, ["a1", "a2"]),
 ])
 def test__init_loners(loners, expected):
@@ -169,6 +177,8 @@ def test__check_reserved_keys__dcim_devices(api: NbApi, items, expected: Any):
     ({"vrf": ["VRF 1", "VRF 2"]}, {"vrf_id": [1, 2]}),
     ({"vrf": ["VRF 1", "typo"]}, {"vrf_id": [1]}),
     ({"vrf": ["typo"]}, {"vrf": ["typo"]}),
+    ({"or_vrf": ["VRF 1"]}, {"vrf_id": [1]}),
+    ({"or_vrf": ["VRF 1", "VRF 2"]}, {"vrf_id": [1, 2]}),
     ({"present_in_vrf": ["null"]}, {"present_in_vrf": ["null"]}),
     ({"present_in_vrf": ["VRF 1"]}, {"present_in_vrf_id": [1]}),
     ({"present_in_vrf": ["VRF 1"], "vrf": ["VRF 2"]},

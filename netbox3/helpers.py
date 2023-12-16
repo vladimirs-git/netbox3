@@ -1,6 +1,5 @@
 """Helper functions."""
 import itertools
-import re
 import urllib
 from typing import Any
 from urllib.parse import urlencode, ParseResult
@@ -292,8 +291,8 @@ def _get_keys_need_split(need_split: SeqStr, params_d: DList) -> SStr:
     while keys:
         key = keys.pop(0)
         # predefined
-        for regex in need_split:
-            if re.search(regex, key):
+        for need_split_ in need_split:
+            if key == need_split_:
                 keys_need_split.add(key)
                 break
         # or_{parameter}

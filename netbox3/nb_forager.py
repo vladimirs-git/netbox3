@@ -17,8 +17,8 @@ from netbox3.foragers.circuits import CircuitsAF
 from netbox3.foragers.core import CoreAF
 from netbox3.foragers.dcim import DcimAF
 from netbox3.foragers.extras import ExtrasAF
-from netbox3.foragers.joiner import Joiner
 from netbox3.foragers.ipam import IpamAF
+from netbox3.foragers.joiner import Joiner
 from netbox3.foragers.tenancy import TenancyAF
 from netbox3.foragers.users import UsersAF
 from netbox3.foragers.virtualization import VirtualizationAF

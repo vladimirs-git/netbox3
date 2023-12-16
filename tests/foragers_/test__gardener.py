@@ -6,8 +6,8 @@ import pytest
 
 from netbox3 import nb_tree
 from netbox3.api.base_c import BaseC
-from netbox3.foragers.joiner import Joiner
 from netbox3.foragers.ipv4 import IPv4
+from netbox3.foragers.joiner import Joiner
 from netbox3.nb_tree import NbTree
 from tests import objects
 

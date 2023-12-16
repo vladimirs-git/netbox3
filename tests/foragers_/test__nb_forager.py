@@ -102,7 +102,7 @@ def test__init(nbf: NbForager):
     assert nbf.api.ipam.aggregates.max_retries == 0
     assert nbf.api.ipam.aggregates.sleep == 10
     assert nbf.api.ipam.aggregates._default_get == {}
-    assert nbf.api.ipam.aggregates._loners == ["^q$", "^prefix$"]
+    assert nbf.api.ipam.aggregates._loners == ["q", "prefix"]
     assert nbf.cache == "netbox.pickle"
 
     params = {

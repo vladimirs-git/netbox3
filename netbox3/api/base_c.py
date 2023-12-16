@@ -28,6 +28,14 @@ from netbox3.exceptions import NbApiError
 from netbox3.types_ import DAny, DStr, LDAny, LStr, DLInt, DList, LDList, DLStr, DDAny
 from netbox3.types_ import TLists, OUParam, LParam
 
+LONERS: DLStr = {
+    "any": ["q"],
+    "dcim/devices/": ["airflow"],
+    "ipam/aggregates/": ["prefix"],
+    "ipam/prefixes/": ["within_include"],
+    "extras/content-types/": ["id", "app_label", "model"],
+}
+
 
 class BaseC:
     """Connector Base."""
@@ -582,14 +590,7 @@ class BaseC:
 
     def _init_loners(self) -> LStr:
         """Init loners filtering parameters."""
-        default: DLStr = {
-            "any": ["^q$"],
-            "ipam/aggregates/": ["^prefix$"],
-            "ipam/prefixes/": ["^within_include$"],
-            "extras/content-types/": ["id", "app_label", "model"],
-        }
-        loners_d: DAny = self.loners or default
-
+        loners_d: DAny = self.loners or LONERS
         loners: LStr = list(loners_d.get("any") or [])
         for path, loners_ in loners_d.items():
             if self.path == path:
@@ -617,7 +618,7 @@ class BaseC:
             response: LDAny = self._query(path)
 
             if ids := [d["id"] for d in response if d[key] in values]:
-                need_delete.append(name)
+                need_delete.extend([name, f"or_{name}"])
                 name_id = f"{name}_id"
                 need_add.setdefault(name_id, []).extend(ids)
 
