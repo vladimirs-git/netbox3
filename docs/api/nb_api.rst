@@ -115,7 +115,7 @@ extras/content-types    app_label, id, model
 
 ----------------------------------------------------------------------------------------
 
-.. _`Example of how to change loners`: https://github.com/vladimirs-git/netbox3/tree/main/examples/api/api__loners.py
+.. _`Example of how to change loners`: https://github.com/vladimirs-git/netbox3/tree/main/demo/api/api__loners.py
 .. _`#14305`: https://github.com/netbox-community/netbox/discussions/14305
 .. _`Schema ip_addresses`: https://demo.netbox.dev/api/schema/swagger-ui/#/ipam/ipam_ip_addresses_list
 .. _`Schema`: https://demo.netbox.dev/api/schema/swagger-ui

@@ -96,7 +96,7 @@ class Connector(BaseC):
         To determine the filtering parameters for various models, you can use:
 
         - API schema https://demo.netbox.dev/api/schema/swagger-ui,
-        - Example https://github.com/vladimirs-git/netbox3/tree/main/examples,
+        - Demo https://github.com/vladimirs-git/netbox3/tree/main/demo,
         - Oficial documentation (if you're lucky).
 
 

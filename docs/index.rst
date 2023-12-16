@@ -25,7 +25,7 @@ This project on `GitHub`_.
     NbForager <foragers/nb_forager.rst>
     NbBranch <branch/nb_branch.rst>
     NbValue <branch/nb_value.rst>
-    Examples <examples.rst>
+    Demo <demo.rst>
 
 
 ----------------------------------------------------------------------------------------

@@ -68,7 +68,7 @@ exclude = [
     ".venv",
     "_notes",
     "dist",
-    "examples",
+    "demo",
     "temp",
     "tmp",
     "venv",
