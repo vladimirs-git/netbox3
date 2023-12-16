@@ -112,7 +112,7 @@ def data(path: str) -> DParamPath:
 
 
 def need_change(params_d: DList, mapping: DParamPath) -> DList:
-    """Filter {parameter} that need change to {parameter}_id.
+    """Filter ``{parameter}`` that need change to ``{parameter}_id``.
 
     Skip parameter for global vrf filtering.
     :param params_d: Parameters that need to filter.

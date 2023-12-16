@@ -169,29 +169,33 @@ def test__check_reserved_keys__dcim_devices(api: NbApi, items, expected: Any):
             api.dcim.devices._check_reserved_keys(items=items)
 
 
-@pytest.mark.parametrize("params_d, expected", [
-    ({"a": ["A"]}, {"a": ["A"]}),
-    ({"a": ["A", "B"]}, {"a": ["A", "B"]}),
-    ({"vrf": ["null"]}, {"vrf": ["null"]}),
-    ({"vrf": ["typo"]}, {"vrf": ["typo"]}),
-    ({"vrf": ["VRF 1"]}, {"vrf_id": [1]}),
-    ({"vrf": ["VRF 1", "VRF 2"]}, {"vrf_id": [1, 2]}),
-    ({"vrf": ["VRF 1", "typo"]}, {"vrf_id": [1]}),
-    ({"vrf": ["typo"]}, {"vrf": ["typo"]}),
-    ({"or_vrf": ["VRF 1"]}, {"vrf_id": [1]}),
-    ({"or_vrf": ["VRF 1", "VRF 2"]}, {"vrf_id": [1, 2]}),
-    ({"present_in_vrf": ["null"]}, {"present_in_vrf": ["null"]}),
-    ({"present_in_vrf": ["VRF 1"]}, {"present_in_vrf_id": [1]}),
-    ({"present_in_vrf": ["VRF 1"], "vrf": ["VRF 2"]},
+@pytest.mark.parametrize("extended_get, params_d, expected", [
+    (True, {"a": ["A"]}, {"a": ["A"]}),
+    (True, {"a": ["A", "B"]}, {"a": ["A", "B"]}),
+    (True, {"vrf": ["null"]}, {"vrf": ["null"]}),
+    (True, {"vrf": ["typo"]}, {"vrf": ["typo"]}),
+    (True, {"vrf": ["VRF 1"]}, {"vrf_id": [1]}),
+    (True, {"vrf": ["VRF 1", "VRF 2"]}, {"vrf_id": [1, 2]}),
+    (True, {"vrf": ["VRF 1", "typo"]}, {"vrf_id": [1]}),
+    (True, {"vrf": ["typo"]}, {"vrf": ["typo"]}),
+    (True, {"or_vrf": ["VRF 1"]}, {"vrf_id": [1]}),
+    (True, {"or_vrf": ["VRF 1", "VRF 2"]}, {"vrf_id": [1, 2]}),
+    (True, {"present_in_vrf": ["null"]}, {"present_in_vrf": ["null"]}),
+    (True, {"present_in_vrf": ["VRF 1"]}, {"present_in_vrf_id": [1]}),
+    (True, {"present_in_vrf": ["VRF 1"], "vrf": ["VRF 2"]},
      {"present_in_vrf_id": [1], "vrf_id": [2]}),
+    (False, {"a": ["A", "B"]}, {"a": ["A", "B"]}),
+    (False, {"vrf": ["VRF 1"]}, {"vrf": ["VRF 1"]}),
 ])
 def test__change_params_name_to_id(
         api: NbApi,
         mock_requests_vrf: Mocker,  # pylint: disable=unused-argument
+        extended_get,
         params_d: DAny,
         expected: DAny,
 ):
     """BaseC._change_params_name_to_id()."""
+    api = NbApi(host="netbox", extended_get=extended_get)
     actual = api.ipam.ip_addresses._change_params_name_to_id(params_d=params_d)
     assert actual == expected
 
@@ -254,7 +258,7 @@ def test__msg_status_code(
 
 def test__msg_status_code__none(api: NbApi):
     """BaseC._msg_status_code()."""
-    actual = api.ipam.ip_addresses._msg_status_code(response=None)
+    actual = api.ipam.ip_addresses._msg_status_code(response=None)  # type: ignore
     assert actual == ""
 
 

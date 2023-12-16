@@ -1,10 +1,10 @@
 # pylint: disable=W0212,R0801,W0621
 
-"""Unittests param_path.py."""
+"""Unittests extended_get.py."""
 import pytest
 
-from netbox3.api import param_path
-from netbox3.api.param_path import ParamPath
+from netbox3.api import extended_get
+from netbox3.api.extended_get import ParamPath
 
 
 def test__param_map():
@@ -19,18 +19,18 @@ def test__param_map():
 def test__data():
     """param_map.data() role."""
     # dcim devices
-    data = param_path.data(path="dcim/devices/")
+    data = extended_get.data(path="dcim/devices/")
     assert data["role"].path == "dcim/device-roles/"
     # dcim devices
-    data = param_path.data(path="dcim/racks/")
+    data = extended_get.data(path="dcim/racks/")
     assert data["role"].path == "dcim/rack-roles/"
     # dcim
-    data = param_path.data(path="dcim/sites/")
+    data = extended_get.data(path="dcim/sites/")
     assert data["circuit"].key == "cid"
     assert data["group"].path == "dcim/site-groups/"
     assert data.get("role") is None
     # ipam
-    data = param_path.data(path="ipam/ip-addresses/")
+    data = extended_get.data(path="ipam/ip-addresses/")
     assert data["circuit"].key == "cid"
     assert data.get("group") is None
     assert data["role"].path == "ipam/roles/"
@@ -50,6 +50,6 @@ def test__data():
 ])
 def test__need_change(params_d, expected):
     """param_map.need_change()."""
-    mapping = param_path.data(path="ipam/vrfs/")
-    actual = param_path.need_change(params_d=params_d, mapping=mapping)
+    mapping = extended_get.data(path="ipam/vrfs/")
+    actual = extended_get.need_change(params_d=params_d, mapping=mapping)
     assert actual == expected

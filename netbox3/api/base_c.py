@@ -22,8 +22,8 @@ from requests.exceptions import ReadTimeout, ConnectionError as RequestsConnecti
 from vhelpers import vdict, vlist, vparam
 
 from netbox3 import helpers as h
-from netbox3.api import param_path
-from netbox3.api.param_path import ParamPath, DParamPath
+from netbox3.api import extended_get
+from netbox3.api.extended_get import ParamPath, DParamPath
 from netbox3.exceptions import NbApiError
 from netbox3.types_ import DAny, DStr, LDAny, LStr, DLInt, DList, LDList, DLStr, DDAny
 from netbox3.types_ import TLists, OUParam, LParam
@@ -145,6 +145,9 @@ class BaseC:
             raised when status_code=400. False - a warning message is logged and an
             empty list is returned with status_code=200. Default is `False`.
 
+        :param bool extended_get: True - Extend filtering parameters in GET request,
+            ``{parameter}`` can be used instead of ``{parameter}_id``. Default is `True`.
+
         :param dict default_get: Set default filtering parameters, to be used in each
             GET request.
 
@@ -166,6 +169,7 @@ class BaseC:
         self.sleep: float = float(kwargs.get("sleep") or 10)
         self.strict: bool = bool(kwargs.get("strict"))
         # Settings
+        self.extended_get: bool = bool(kwargs.get("extended_get"))
         self.default_get: DDAny = dict(kwargs.get("default_get") or {})
         self.loners: DLStr = dict(kwargs.get("loners") or {})
 
@@ -616,20 +620,21 @@ class BaseC:
         need_delete: LStr = []
         need_add: DLInt = {}
 
-        mapping_d: DParamPath = param_path.data(self.path)
-        need_change: DList = param_path.need_change(params_d, mapping_d)
+        if self.extended_get is True:
+            mapping_d: DParamPath = extended_get.data(self.path)
+            need_change: DList = extended_get.need_change(params_d, mapping_d)
 
-        for name, values in need_change.items():
-            param_path_: ParamPath = mapping_d[name]
-            path = param_path_.path
-            key = param_path_.key
+            for name, values in need_change.items():
+                param_path: ParamPath = mapping_d[name]
+                path = param_path.path
+                key = param_path.key
 
-            response: LDAny = self._query(path)
+                response: LDAny = self._query(path)
 
-            if ids := [d["id"] for d in response if d[key] in values]:
-                need_delete.extend([name, f"or_{name}"])
-                name_id = f"{name}_id"
-                need_add.setdefault(name_id, []).extend(ids)
+                if ids := [d["id"] for d in response if d[key] in values]:
+                    need_delete.extend([name, f"or_{name}"])
+                    name_id = f"{name}_id"
+                    need_add.setdefault(name_id, []).extend(ids)
 
         params_d_: DList = {k: v for k, v in params_d.items() if k not in need_delete}
         params_d_.update(need_add)

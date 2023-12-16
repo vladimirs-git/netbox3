@@ -6,7 +6,8 @@ CHANGELOG
 
 0.1.14 (2023-12-16)
 -------------------
-* [new] NbApi.strict
+* [new] NbApi.strict, NbApi.extended_get
+
 
 0.1.13 (2023-12-16)
 -------------------

@@ -55,6 +55,7 @@ class NbForager:
         sleep: int = 10,
         strict: bool = False,
         # Settings
+        extended_get: bool = False,
         default_get: ODDAny = None,
         loners: ODLStr = None,
         cache: str = "",
@@ -111,6 +112,9 @@ class NbForager:
             raised when status_code=400. False - a warning message is logged and an
             empty list is returned with status_code=200. Default is `False`.
 
+        :param bool extended_get: True - Extend filtering parameters in GET request,
+            ``{parameter}`` can be used instead of ``{parameter}_id``. Default is `True`.
+
         :param dict default_get: Set default filtering parameters, to be used in each
             GET request.
 
@@ -150,6 +154,7 @@ class NbForager:
             "max_retries": max_retries,
             "sleep": sleep,
             "strict": strict,
+            "extended_get": extended_get,
             "default_get": default_get,
             "loners": loners,
             **kwargs,

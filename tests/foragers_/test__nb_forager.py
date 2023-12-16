@@ -82,6 +82,7 @@ def test__init(nbf: NbForager):
         "max_retries",
         "sleep",
         "strict",
+        "extended_get",
         "default_get",
         "loners",
         "cache",

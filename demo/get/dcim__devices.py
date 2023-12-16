@@ -21,14 +21,21 @@ objects = nb.dcim.devices.get(or_tag=["tag1", "tag2"])
 
 # Location
 objects = nb.dcim.devices.get(region="REGION1")
+objects = nb.dcim.devices.get(region_id=1)
 objects = nb.dcim.devices.get(site_group="SITE GROUP1")
-objects = nb.dcim.devices.get(site="SITE1")
+objects = nb.dcim.devices.get(site_group_id=1)
+objects = nb.dcim.devices.get(site=["SITE1", "SITE2"])
+objects = nb.dcim.devices.get(site=["site1", "site2"])
+objects = nb.dcim.devices.get(site_id=1)
 objects = nb.dcim.devices.get(location=["LOCATION1", "LOCATION2"])
+objects = nb.dcim.devices.get(location_id=[1, 2])
 objects = nb.dcim.devices.get(rack=["RACK1", "RACK2"])
+objects = nb.dcim.devices.get(rack_id=[1, 2])
 
 # Operation
 objects = nb.dcim.devices.get(status="offline")
 objects = nb.dcim.devices.get(role=["DEVICE ROLE1", "DEVICE ROLE2"])
+objects = nb.dcim.devices.get(role_id=[1, 2])
 objects = nb.dcim.devices.get(airflow=["rear-to-front", "left-to-right"])
 objects = nb.dcim.devices.get(or_airflow=["rear-to-front", "left-to-right"])
 objects = nb.dcim.devices.get(serial=["serial1", "serial2"])
@@ -37,12 +44,18 @@ objects = nb.dcim.devices.get(mac_address=["00:00:00:00:00:01", "00:00:00:00:01:
 
 # Hardware
 objects = nb.dcim.devices.get(manufacturer=["MANUFACTURER1", "MANUFACTURER2"])
+objects = nb.dcim.devices.get(manufacturer_id=[1, 2])
 objects = nb.dcim.devices.get(device_type=["MODEL1", "MODEL2"])
+objects = nb.dcim.devices.get(device_type_id=[1, 2])
 objects = nb.dcim.devices.get(platform=["PLATFORM1", "PLATFORM2"])
+objects = nb.dcim.devices.get(platform_id=[1, 2])
 
 # Tenant
 objects = nb.dcim.devices.get(tenant_group=["TENANT GROUP1", "TENANT GROUP2"])
+objects = nb.dcim.devices.get(tenant_group=[1, 2])
 objects = nb.dcim.devices.get(tenant=["TENANT1", "TENANT2"])
+objects = nb.dcim.devices.get(tenant=["tenant1", "tenant2"])
+objects = nb.dcim.devices.get(tenant_id=[1, 2])
 
 # Contacts
 # Contact

@@ -262,7 +262,7 @@ def make_combinations(need_split: SeqStr, params_d: DList) -> LDList:
 
 
 def change_params_or(params_ld: LDList) -> LDList:
-    """Change parameters with name or_{parameter}.
+    """Change ``parameter`` with name ``or_{parameter}``.
 
     :param params_ld: Parameters that need to update.
     :return: Updated parameters.
