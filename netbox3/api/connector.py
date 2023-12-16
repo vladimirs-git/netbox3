@@ -80,7 +80,7 @@ class Connector(BaseC):
 
     # noinspection PyIncorrectDocstring
     def get(self, **kwargs) -> LDAny:
-        """Request data from Netbox using `Filtering parameters`_.
+        """Request data from Netbox using `Schema ip_addresses`_.
 
         The filtering parameters are identical to those in the web interface
         filter form. The value of each parameter can be either a single value
@@ -108,10 +108,10 @@ class Connector(BaseC):
 
         :param or_{parameter}: List of parameters that need to be requested
             in an ``OR`` manner, where ``{parameter}`` is the name of the
-            Netbox REST API `Filtering parameters`_.
+            Netbox REST API `Schema ip_addresses`_.
         :type or_{parameter}: list
 
-        :param kwargs: Netbox REST API `Filtering parameters`_.
+        :param kwargs: Netbox REST API `Schema ip_addresses`_.
 
         :return: List of dictionaries containing Netbox objects.
         :rtype: List[dict]

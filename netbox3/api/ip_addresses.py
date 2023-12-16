@@ -13,10 +13,11 @@ class IpAddressesC(Connector):
 
     # noinspection PyIncorrectDocstring
     def get(self, **kwargs) -> LDAny:  # pylint: disable=W0246
-        """Request data from Netbox using `Filtering parameters`_.
+        """Request data from Netbox using `Schema ip_addresses`_.
 
         Only ``NbApi.ipam.ip_addresses.get()`` is described in this documentation.
         Other models are implemented in a similar manner.
+        Exact parameters you can find in `Schema`_.
 
         NbApi parameters:
 
@@ -28,7 +29,7 @@ class IpAddressesC(Connector):
 
         :param or_{parameter}: List of parameters that need to be requested
             in an ``OR`` manner, where ``{parameter}`` is the name of the
-            Netbox REST API `Filtering parameters`_.
+            Netbox REST API `Schema ip_addresses`_.
         :type or_{parameter}: list
 
         WEB UI Filter parameters:

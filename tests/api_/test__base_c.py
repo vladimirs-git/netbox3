@@ -42,6 +42,7 @@ def mock_session(status_code: int, content: str = ""):
         response = Response()
         response.status_code = status_code
         response._content = content.encode()
+        response.url = kwargs.get("url", "")
         return response
 
     return mock
@@ -196,12 +197,19 @@ def test__change_params_name_to_id(
 
 
 @pytest.mark.parametrize("kwargs, status_code, text, error", [
-    ({"host": "netbox"}, 200, "", None),
-    ({"host": "netbox"}, 400, "", None),
-    ({"host": "netbox"}, 500, "any", ConnectionError),
-    ({"host": "netbox"}, 403, "Invalid token", ConnectionError),
+    ({"host": "netbox", "strict": True}, 200, "", None),
+    ({"host": "netbox", "strict": False}, 200, "", None),
+    ({"host": "netbox", "strict": True}, 400, "", None),
+    ({"host": "netbox", "strict": False}, 400, "", ConnectionError),
+    ({"host": "netbox", "strict": True}, 500, "any", ConnectionError),
+    ({"host": "netbox", "strict": False}, 500, "any", ConnectionError),
+    ({"host": "netbox", "strict": True}, 403, "Invalid token", ConnectionError),
+    ({"host": "netbox", "strict": False}, 403, "Invalid token", ConnectionError),
+    ({"host": "netbox", "timeout": 1, "max_retries": 1, "sleep": 1, "strict": True}, 200, "", None),
     ({"host": "netbox", "timeout": 1, "max_retries": 1, "sleep": 1}, 200, "", None),
     # was implemented in old version
+    ({"host": "netbox", "timeout": 1, "max_retries": 2, "sleep": 1, "strict": True}, 504, "",
+     ConnectionError),
     ({"host": "netbox", "timeout": 1, "max_retries": 2, "sleep": 1}, 504, "", ConnectionError),
 ])
 def test__retry_requests(
@@ -224,6 +232,30 @@ def test__retry_requests(
 
 
 # ============================= helpers ==============================
+
+@pytest.mark.parametrize("status_code, text, expected", [
+    (400, "text", "status_code=400 text='text' url='netbox'"),
+    (400, "<title>Page Not Found. text<title>",
+     "status_code=400 text='Page Not Found.' url='netbox'"),
+])
+def test__msg_status_code(
+        api: NbApi,
+        monkeypatch: MonkeyPatch,
+        status_code: int,
+        text: str,
+        expected: Any,
+):
+    """BaseC._msg_status_code()."""
+    monkeypatch.setattr(Session, "get", mock_session(status_code, text))
+    response: Response = api.ipam.ip_addresses._session.get(url="netbox")
+    actual = api.ipam.ip_addresses._msg_status_code(response=response)
+    assert actual == expected
+
+
+def test__msg_status_code__none(api: NbApi):
+    """BaseC._msg_status_code()."""
+    actual = api.ipam.ip_addresses._msg_status_code(response=None)
+    assert actual == ""
 
 
 @pytest.mark.parametrize("kwargs, expected", [

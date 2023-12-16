@@ -133,12 +133,20 @@ class BaseC:
         :param int timeout: Session timeout (seconds). Default is `60`.
 
         :param int max_retries: Retries the request multiple times if the Netbox API
-            does not respond or responds with a timeout. Default is `0`.
+            does not respond or responds with a timeout. Default is `0`. This is useful
+            for scheduled scripts in cron jobs, when the connection to Netbox server is
+            not stable.
 
         :param int sleep: Interval (seconds) before the next retry after
             session timeout reached. Default is `10`.
 
-        :param dict default_get: Set default filtering parameters.
+        :param bool strict: When querying objects by tag, if there are no tags present,
+            the Netbox API response returns a status_code=400. True - ConnectionError is
+            raised when status_code=400. False - a warning message is logged and an
+            empty list is returned with status_code=200. Default is `False`.
+
+        :param dict default_get: Set default filtering parameters, to be used in each
+            GET request.
 
         :param dict loners: Set :ref:`Filtering parameters in an OR manner`.
         """
@@ -156,6 +164,7 @@ class BaseC:
         self.timeout: float = float(kwargs.get("timeout") or 60)
         self.max_retries: int = int(kwargs.get("max_retries") or 0)
         self.sleep: float = float(kwargs.get("sleep") or 10)
+        self.strict: bool = bool(kwargs.get("strict"))
         # Settings
         self.default_get: DDAny = dict(kwargs.get("default_get") or {})
         self.loners: DLStr = dict(kwargs.get("loners") or {})
@@ -468,14 +477,14 @@ class BaseC:
             if response.ok:
                 return response
             msg = self._msg_status_code(response)
-            msg.lstrip(".")
             if self._is_status_code_5xx(response):
                 raise ConnectionError(f"Netbox server error: {msg}.")
             if self._is_status_code_403_credentials_error(response):
                 raise ConnectionError(f"Netbox credentials error: {msg}.")
             if self._is_status_code_400(response):
-                logging.warning(msg)
-                return response
+                if self.strict:
+                    logging.warning(msg)
+                    return response
             raise ConnectionError(f"ConnectionError: {msg}.")
 
         msg = f"max_retries={self.max_retries!r} reached."

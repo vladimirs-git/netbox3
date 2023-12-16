@@ -65,6 +65,7 @@ def test__init__(api: NbApi):
         "timeout",
         "max_retries",
         "sleep",
+        "strict",
         "default_get",
         "loners",
         "kwargs",

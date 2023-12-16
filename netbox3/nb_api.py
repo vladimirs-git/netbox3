@@ -33,23 +33,12 @@ class NbApi:
     For example https://demo.netbox.dev/api/ipam/ip-addresses/
     can be reached by ``NbApi.ipam.ip_addresses.get()`` method.
 
-    Replaces an error-400 response with an empty result.
-    For example, when querying some objects by tag, if there are no tag in
-    Netbox, the default Netbox API response is error-400 (For what reason do we
-    need to handle exceptions in every request?). This tool logs a warning
-    message and returns an ok-200 response with an empty list.
-
-    Retries the request multiple times if the Netbox API does not respond or
-    responds with a timeout.
-    This is useful for scheduled scripts in cron jobs, when the
-    connection to Netbox server is not stable (I am a network engineer,
-    and my scripts should remain stable even when the network is unstable).
-
     The parameters for the ``create``, ``delete``, ``update`` methods are
     identical in all models.
     The parameters for the ``get`` method are different for each model.
     Only ``NbApi.ipam.ip_addresses.get()`` is described in this documentation.
     Other models are implemented in a similar manner.
+    Exact parameters you can find in `Schema`_.
     """
 
     def __init__(
@@ -68,6 +57,7 @@ class NbApi:
         timeout: int = 60,
         max_retries: int = 0,
         sleep: int = 10,
+        strict: bool = False,
         # Settings
         default_get: ODDAny = None,
         loners: ODLStr = None,
@@ -106,12 +96,20 @@ class NbApi:
         :param int timeout: Session timeout (seconds). Default is `60`.
 
         :param int max_retries: Retries the request multiple times if the Netbox API
-            does not respond or responds with a timeout. Default is `0`.
+            does not respond or responds with a timeout. Default is `0`. This is useful
+            for scheduled scripts in cron jobs, when the connection to Netbox server is
+            not stable.
 
         :param int sleep: Interval (seconds) before the next retry after
             session timeout reached. Default is `10`.
 
-        :param dict default_get: Set default filtering parameters.
+        :param bool strict: When querying objects by tag, if there are no tags present,
+            the Netbox API response returns a status_code=400. True - ConnectionError is
+            raised when status_code=400. False - a warning message is logged and an
+            empty list is returned with status_code=200. Default is `False`.
+
+        :param dict default_get: Set default filtering parameters, to be used in each
+            GET request.
 
         :param dict loners: Set :ref:`Filtering parameters in an OR manner`.
 
@@ -141,11 +139,11 @@ class NbApi:
             "timeout": timeout,
             "max_retries": max_retries,
             "sleep": sleep,
+            "strict": strict,
             "default_get": default_get,
             "loners": loners,
             **kwargs,
         }
-
         # application connectors
         self.circuits = CircuitsAC(**kwargs)
         self.core = CoreAC(**kwargs)
