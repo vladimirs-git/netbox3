@@ -206,6 +206,32 @@ class BaseC:
             url += f":{port}"
         return f"{url}/api/"
 
+    # ============================= methods ==============================
+
+    def validate_params(self, **kwargs) -> LDList:
+        """Validate and update params.
+
+        Remove duplicates, convert single items to list, replace {name} to {name}_id,
+        split the parallel parameters into separate items.
+
+        :param kwargs: Filter parameters to update.
+
+        :return: Updated parameters.
+        """
+        params_d: DList = _lists_wo_dupl(kwargs)
+        params_d = self._change_params_name_to_id(params_d)
+        params_ld: LDList = h.make_combinations(self._loners, params_d)
+        params_ld = h.change_params_or(params_ld)
+        params_ld = h.join_params(params_ld, self._default_get)
+
+        params_ld = h.slice_params_ld(
+            url=self.url,
+            max_len=self.url_length,
+            keys=self._slices,
+            params_ld=params_ld,
+        )
+        return params_ld
+
     # ============================== query ===============================
 
     def _query(self, path: str, params: OUParam = None) -> LDAny:
@@ -233,14 +259,6 @@ class BaseC:
         :return: A list of the Netbox objects.
         """
         self._results = []
-
-        # slice params
-        params_ld = h.slice_params_ld(
-            url=self.url,
-            max_len=self.url_length,
-            keys=self._slices,
-            params_ld=params_ld,
-        )
 
         # threads
         if self.threads > 1:
@@ -497,22 +515,6 @@ class BaseC:
         response.status_code = 504  # Gateway Timeout
         response._content = str.encode(msg)  # pylint: disable=protected-access
         return response
-
-    def _validate_params(self, **kwargs) -> LDList:
-        """Validate and update params.
-
-        Remove duplicates, convert single items to list, replace {name} to {name}_id,
-        split the parallel parameters into separate items.
-        :param kwargs: Filter parameters to update.
-
-        :return: Updated parameters.
-        """
-        params_d: DList = _lists_wo_dupl(kwargs)
-        params_d = self._change_params_name_to_id(params_d)
-        params_ld: LDList = h.make_combinations(self._loners, params_d)
-        params_ld = h.change_params_or(params_ld)
-        params_ld = h.join_params(params_ld, self._default_get)
-        return params_ld
 
     def _headers(self) -> DStr:
         """Session headers with token."""

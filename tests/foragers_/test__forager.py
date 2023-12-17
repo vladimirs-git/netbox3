@@ -188,14 +188,23 @@ def mock_requests_vrfs():
 
 
 @pytest.mark.skip(reason="Has blocking effect")
-def test__get(mock_requests_vrfs: Mocker):  # pylint: disable=unused-argument
+def test__get(mock_requests_vrfs: Mocker):
     """Forager.get().
 
     url_length=1 is required to check slice params and to
     mock 3 requests: ipam/vrfs, ipam/route-targets/?id=1, ipam/route-targets/?id=2.
     """
+    _ = mock_requests_vrfs  # noqa
     nbf = NbForager(host="netbox", url_length=1, threads=2)
     nbf.ipam.vrfs.get()
+
+
+def test__get__task(mock_requests_vrfs: Mocker):
+    """Forager.get(task=True)."""
+    _ = mock_requests_vrfs  # noqa
+    nbf = NbForager(host="netbox")
+    nbf.ipam.vrfs.get(tag=["TAG1", "TAG2"], task=True)
+    x = 1
 
 
 @pytest.mark.parametrize("params, expected", FIND)

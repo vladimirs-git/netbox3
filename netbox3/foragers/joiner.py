@@ -46,7 +46,7 @@ class Joiner:
     def _join_devices(self, app: str) -> None:
         """Create additional keys to represent devices/VM similar to the WEB UI.
 
-        :param app: Application name: "dcim", "virtualization"
+        :param app: Application name: "dcim", "ipam", etc.
         :return: None. Update NbTree object.
         """
         model = "devices"

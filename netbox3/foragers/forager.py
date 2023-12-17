@@ -10,14 +10,15 @@ from queue import Queue
 from threading import Thread
 from urllib.parse import urlparse, parse_qs
 
-from vhelpers import vlist, vstr
+from vhelpers import vlist, vstr, vparam
 
 from netbox3 import helpers as h
 from netbox3.branch.nb_branch import NbBranch
+from netbox3.foragers.task import LTask, Task
 from netbox3.nb_api import NbApi
 from netbox3.nb_tree import NbTree, missed_urls
-from netbox3.types_ import LDAny, DiDAny, LStr, LT2StrDAny, DList, LDList, TLists
-
+from netbox3.types_ import LDAny, DiDAny, LStr, LT2StrDAny, DList, LDList, TLists, LParam
+from urllib.parse import urlencode
 
 class Forager:
     """Forager methods for different models."""
@@ -34,6 +35,7 @@ class Forager:
         self.model = model
         self.api: NbApi = forager_a.api
         self.connector = getattr(getattr(self.api, app), model)
+        self.tasks: LTask = []
         # data
         self.root: NbTree = forager_a.root
         self.root_d: DiDAny = getattr(getattr(self.root, app), model)
@@ -69,56 +71,103 @@ class Forager:
         """
         return len(self.root_d)
 
+    # TODO
+    def _create_tasks(self, method_: str, **kwargs) -> None:
+        """Create tasks  # TODO
+
+        :param method_: Method name.
+        :param kwargs: Filtering parameters.
+
+        :return: None. Update self object.
+        """
+        connector = self.api.circuits.circuit_terminations
+        params_ld: LDList = self.connector.validate_params(**kwargs)
+        tasks = []
+        for params_d in params_ld:
+            model = h.attr_to_model(self.model)
+            params_l: LParam = vparam.from_dict(params_d)
+            query: str = urlencode(params_l)
+            url_base = connector.url_base
+
+            task = Task(
+                url=f"{url_base}{self.app}/{model}/?{query}",
+                app=self.app,
+                model=self.model,
+                method=method_,
+                params_d=params_d,
+            )
+            tasks.append(task)
+        self.tasks.extend(tasks)
+
     # noinspection PyProtectedMember
-    def get(self, nested: bool = False, **kwargs) -> None:
+    def get(self, task: bool = False, nested: bool = False, **kwargs) -> None:
         """Retrieve data from the Netbox.
 
         Request data based on the filter parameters (kwargs described in the
         NbApi connector) and save to the NbForager.root.
 
+        :param bool task: `True` - Schedule task of request for next threading,
+            `False` - Send request to the Netbox API. Default is `False`.
+
         :param bool nested: `True` - Request base and nested objects,
-            `False` - Request only base objects. Default id `False`
+            `False` - Request only base objects. Default id `False`.
 
         :param kwargs: Filtering parameters.
 
         :return: None. Update self object.
         """
+        if task:  # TODO nested
+            self._create_tasks(method_="get", **kwargs)
+            return
+
         # Query main data
         nb_objects: LDAny = self._get_root_data_from_netbox(**kwargs)
-        if not nested:
-            return
-        urls: LStr = self._collect_nested_urls(nb_objects)
 
         # Query nested data
-        # threads
+        if not nested:
+            urls: LStr = self._collect_nested_urls(nb_objects)
+            self._query_urls(urls)
+
+    def _query_urls(self, urls: LStr) -> None:
+        """Query the given list of URLs in threading ot loop mode and save the results.
+
+        :param urls: A list of URLs to query.
+        :return: None. Update data in object.
+        """
         results: LDAny = []
+
+        # threading
         if self.threads > 1:
             path_params: LT2StrDAny = self._get_path_params(urls)
             self._clear_connector_results(path_params)
             self._query_threads(path_params)
             results_: LDAny = self._pop_connector_results(path_params)
             results.extend(results_)
+            self._save_results(results)
+            return
 
         # loop
-        else:
-            for url in urls:
-                app, model, _ = h.split_url(url)
-                path = f"{app}/{model}/"
-                connector = self._get_connector(path)
-                params_d: DList = parse_qs(urlparse(url).query)
-                params_ld: LDList = connector._validate_params(**params_d)  # pylint: disable=W0212
+        for url in urls:
+            app, model, _ = h.split_url(url)
+            path = f"{app}/{model}/"
+            connector = self._get_connector(path)
+            params_d: DList = parse_qs(urlparse(url).query)
+            params_ld: LDList = connector.validate_params(**params_d)
 
-                # slice params
-                params_ld = h.slice_params_ld(
-                    url=url,
-                    max_len=connector.url_length,
-                    keys=connector._slices,  # pylint: disable=W0212
-                    params_ld=params_ld,
-                )
+            # slice params
+            # TODO h.slice_params_ld() is in connector._validate_params()
+            #  check possibility to remove this section
+            #  possible need use "connector.url = url"
+            params_ld = h.slice_params_ld(
+                url=url,
+                max_len=connector.url_length,
+                keys=connector._slices,  # pylint: disable=W0212
+                params_ld=params_ld,
+            )
 
-                for params_d in params_ld:
-                    results_ = connector._query_loop(path, params_d)  # pylint: disable=W0212
-                    results.extend(results_)
+            for params_d in params_ld:
+                results_ = connector._query_loop(path, params_d)  # pylint: disable=W0212
+                results.extend(results_)
 
         self._save_results(results)
 
@@ -181,8 +230,12 @@ class Forager:
         """
         nb_objects: LDAny = self.connector.get(**kwargs)
         nb_objects = self._validate_ids(nb_objects)
+
+        # save
         for nb_object in nb_objects:
-            self.root_d[nb_object["id"]] = nb_object
+            id_ = nb_object["id"]
+            self.root_d[id_] = nb_object
+
         return nb_objects
 
     @staticmethod

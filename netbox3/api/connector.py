@@ -116,7 +116,7 @@ class Connector(BaseC):
         :return: List of dictionaries containing Netbox objects.
         :rtype: List[dict]
         """
-        params_ld: LDList = self._validate_params(**kwargs)
+        params_ld: LDList = self.validate_params(**kwargs)
         items: LDAny = self._query_params_ld(params_ld)
         self._check_reserved_keys(items=items)
         return items

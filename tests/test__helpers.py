@@ -130,8 +130,8 @@ def test__split_url(url, expected):
 @pytest.mark.parametrize("url, expected", [
     ("", ValueError),
     ("typo", ValueError),
-    ("https://domain.com/api/app/model", "app/model/"),
-    ("https://domain.com/api/app/model/1?key=value", "app/model/"),
+    ("https://domain.com/api/ipam/vrf", "ipam/vrf/"),
+    ("https://domain.com/api/ipam/vrf/1?key=value", "ipam/vrf/"),
 ])
 def test__url_to_path(url, expected):
     """helpers.url_to_path()"""

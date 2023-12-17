@@ -101,6 +101,19 @@ def model_to_attr(model: str) -> str:
     return "_".join(model.split("-"))
 
 
+def attr_to_model(attr: str) -> str:  # TODO test
+    """Convert attribute name to model name.
+
+    :param attr: The attribute name to be converted.
+
+    :return: The converted model name.
+
+    :example:
+        attr_to_model("ip_addresses") -> "ip-addresses"
+    """
+    return "-".join(attr.split("_"))
+
+
 def nested_urls(nb_objects: LDAny) -> LStr:
     """Get a list of URLs from a Netbox nested objects.
 
@@ -194,7 +207,13 @@ def split_url(url: str) -> T3Str:
 
 
 def url_to_path(url: str) -> str:
-    """Convert URL to path app/model."""
+    """Convert URL to path app/model.
+
+    :param url: URL to split.
+    :return: Path with application and model.
+    :example:
+        url_to_path("https://domain.com/api/ipam/vrf/1?id=1") -> "ipam/vrf/"
+    """
     app, model, _ = split_url(url)
     if app and model:
         return f"{app}/{model}/"

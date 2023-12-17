@@ -189,12 +189,13 @@ def test__check_reserved_keys__dcim_devices(api: NbApi, items, expected: Any):
 ])
 def test__change_params_name_to_id(
         api: NbApi,
-        mock_requests_vrf: Mocker,  # pylint: disable=unused-argument
+        mock_requests_vrf: Mocker,
         extended_get,
         params_d: DAny,
         expected: DAny,
 ):
     """BaseC._change_params_name_to_id()."""
+    _ = mock_requests_vrf  # noqa
     api = NbApi(host="netbox", extended_get=extended_get)
     actual = api.ipam.ip_addresses._change_params_name_to_id(params_d=params_d)
     assert actual == expected

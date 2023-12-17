@@ -66,6 +66,7 @@ def test__init__(api: NbApi):
         "max_retries",
         "sleep",
         "strict",
+        "extended_get",
         "default_get",
         "loners",
         "kwargs",
@@ -85,10 +86,8 @@ def test__url(params, expected):
     assert actual == expected
 
 
-def test__version(
-        api: NbApi,
-        mock_requests_status: Mocker,  # pylint: disable=unused-argument
-):
+def test__version(api: NbApi, mock_requests_status: Mocker):
     """NbApi.version()."""
+    _ = mock_requests_status  # noqa
     actual = api.version()
     assert actual == "3.6.5"

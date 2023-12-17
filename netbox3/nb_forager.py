@@ -19,6 +19,7 @@ from netbox3.foragers.dcim import DcimAF
 from netbox3.foragers.extras import ExtrasAF
 from netbox3.foragers.ipam import IpamAF
 from netbox3.foragers.joiner import Joiner
+from netbox3.foragers.task import LTask, Tasks
 from netbox3.foragers.tenancy import TenancyAF
 from netbox3.foragers.users import UsersAF
 from netbox3.foragers.virtualization import VirtualizationAF
@@ -167,6 +168,7 @@ class NbForager:
         self.api = NbApi(**kwargs)
         self.cache: str = make_cache_path(cache, **kwargs)
         self.msgs = Messages(name=self.api.host)
+        # self.tasks: LTask = []  # TODO delete
 
         # application foragers
         self.circuits = CircuitsAF(self.api, self.root, self.tree)
@@ -306,6 +308,28 @@ class NbForager:
 
         cache = NbCache(tree=self.root, status=status, cache=self.cache)
         cache.write_cache()
+
+    def run_tasks(self) -> None:
+        """Run Tasks.
+
+        Before to run, tasks need be collected by NbForager.{app}.{model}.{method}
+        with parameter task=True.
+        """
+        tasks_o: Tasks = Tasks()
+        for app in self.tree.apps():
+            for model in getattr(self.tree, app).models():
+                tasks: LTask = getattr(getattr(getattr(self, app), model), "tasks")
+                for task in tasks:
+                    getattr(tasks_o, task.method).append(task)
+                tasks.clear()
+
+        for method, tasks in tasks_o.ordered_tasks():
+            if not tasks:
+                continue
+            urls: LStr = [o.url for o in tasks]
+            forager = self.circuits.circuit_terminations
+            forager._query_urls(urls)
+
 
     def version(self) -> str:
         """Get Netbox version from the NbForager.status.

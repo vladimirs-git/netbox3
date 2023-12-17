@@ -233,7 +233,7 @@ def join_tree(tree: NbTree) -> NbTree:
     :return: NbTree object with the joined data.
     """
     tree = deepcopy(tree)
-    for app in tree.apps():  # pylint: disable=R1702
+    for app in tree.apps():
         for model in getattr(tree, app).models():
             objects_d = getattr(getattr(tree, app), model)
             for _, parent in objects_d.items():
