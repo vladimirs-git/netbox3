@@ -211,11 +211,13 @@ class BaseC:
     def validate_params(self, **kwargs) -> LDList:
         """Validate and update params.
 
-        Remove duplicates, convert single items to list, replace {name} to {name}_id,
-        split the parallel parameters into separate items.
+        - Remove duplicates,
+        - Convert single items to list,
+        - Replace {name} to {name}_id,
+        - Split the parallel parameters into separate items,
+        - Slice parameters if URL length is too long,
 
         :param kwargs: Filter parameters to update.
-
         :return: Updated parameters.
         """
         params_d: DList = _lists_wo_dupl(kwargs)
@@ -249,7 +251,7 @@ class BaseC:
         if params is None:
             params = []
         params_d = vparam.to_dict(params)
-        return self._query_loop(path, params_d)
+        return self.query_loop(path, params_d)
 
     def _query_params_ld(self, params_ld: LDList) -> LDAny:
         """Retrieve data from the Netbox.
@@ -268,7 +270,7 @@ class BaseC:
         # loop
         else:
             for params_d in params_ld:
-                results_: LDAny = self._query_loop(self.path, params_d)
+                results_: LDAny = self.query_loop(self.path, params_d)
                 self._results.extend(results_)
 
         # save
@@ -277,7 +279,7 @@ class BaseC:
         self._results = []
         return results
 
-    def _query_count(self, path: str, params_d: DAny) -> None:
+    def query_count(self, path: str, params_d: DAny) -> None:
         """Retrieve counters of interested objects from the Netbox.
 
         :param path: Section of the URL that points to the model.
@@ -301,7 +303,7 @@ class BaseC:
         result = {"count": count, "params_d": params_d}
         self._results.append(result)
 
-    def _query_loop(self, path: str, params_d: DList) -> LDAny:
+    def query_loop(self, path: str, params_d: DList) -> LDAny:
         """Retrieve data from Netbox in loop mode.
 
         If the number of items in the result exceeds the limit, iterate through the offset
@@ -388,7 +390,7 @@ class BaseC:
         :return: List of dict with counters and parameters of interested objects.
         """
         self._results = []
-        self._query_threads(method=self._query_count, params_ld=params_ld)
+        self._query_threads(method=self.query_count, params_ld=params_ld)
         results: LDAny = self._results
         self._results = []
         return results

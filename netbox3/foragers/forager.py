@@ -71,26 +71,23 @@ class Forager:
         """
         return len(self.root_d)
 
-    # TODO
+    # TODO test
     def _create_tasks(self, method_: str, **kwargs) -> None:
-        """Create tasks  # TODO
+        """Create tasks.
 
         :param method_: Method name.
         :param kwargs: Filtering parameters.
 
         :return: None. Update self object.
         """
-        connector = self.api.circuits.circuit_terminations
         params_ld: LDList = self.connector.validate_params(**kwargs)
         tasks = []
         for params_d in params_ld:
             model = h.attr_to_model(self.model)
-            params_l: LParam = vparam.from_dict(params_d)
-            query: str = urlencode(params_l)
-            url_base = connector.url_base
+            query: str = urlencode(vparam.from_dict(params_d))
 
             task = Task(
-                url=f"{url_base}{self.app}/{model}/?{query}",
+                url=f"{self.connector.url_base}{self.app}/{model}/?{query}",
                 app=self.app,
                 model=self.model,
                 method=method_,
@@ -116,7 +113,7 @@ class Forager:
 
         :return: None. Update self object.
         """
-        if task:  # TODO nested
+        if task:
             self._create_tasks(method_="get", **kwargs)
             return
 
@@ -124,7 +121,7 @@ class Forager:
         nb_objects: LDAny = self._get_root_data_from_netbox(**kwargs)
 
         # Query nested data
-        if not nested:
+        if nested:
             urls: LStr = self._collect_nested_urls(nb_objects)
             self._query_urls(urls)
 
@@ -154,19 +151,8 @@ class Forager:
             params_d: DList = parse_qs(urlparse(url).query)
             params_ld: LDList = connector.validate_params(**params_d)
 
-            # slice params
-            # TODO h.slice_params_ld() is in connector._validate_params()
-            #  check possibility to remove this section
-            #  possible need use "connector.url = url"
-            params_ld = h.slice_params_ld(
-                url=url,
-                max_len=connector.url_length,
-                keys=connector._slices,  # pylint: disable=W0212
-                params_ld=params_ld,
-            )
-
             for params_d in params_ld:
-                results_ = connector._query_loop(path, params_d)  # pylint: disable=W0212
+                results_ = connector.query_loop(path, params_d)
                 results.extend(results_)
 
         self._save_results(results)

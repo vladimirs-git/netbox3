@@ -101,7 +101,7 @@ def model_to_attr(model: str) -> str:
     return "_".join(model.split("-"))
 
 
-def attr_to_model(attr: str) -> str:  # TODO test
+def attr_to_model(attr: str) -> str:
     """Convert attribute name to model name.
 
     :param attr: The attribute name to be converted.

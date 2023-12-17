@@ -48,13 +48,24 @@ def test__join_urls(urls, expected):
 
 @pytest.mark.parametrize("model, expected", [
     ("", ""),
-    ("model", "model"),
-    ("model-group", "model_group"),
-    ("model_group", "model_group"),
+    ("prefixes", "prefixes"),
+    ("ip-addresses", "ip_addresses"),
+    ("ip_addresses", "ip_addresses"),
 ])
 def test__model_to_attr(model, expected):
     """helpers.model_to_attr()"""
     actual = h.model_to_attr(model)
+    assert actual == expected
+
+@pytest.mark.parametrize("model, expected", [
+    ("", ""),
+    ("prefixes", "prefixes"),
+    ("ip_addresses", "ip-addresses"),
+    ("ip_addresses", "ip-addresses"),
+])
+def test__attr_to_model(model, expected):
+    """helpers.attr_to_model()"""
+    actual = h.attr_to_model(model)
     assert actual == expected
 
 
