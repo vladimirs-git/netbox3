@@ -57,6 +57,7 @@ def test__model_to_attr(model, expected):
     actual = h.model_to_attr(model)
     assert actual == expected
 
+
 @pytest.mark.parametrize("model, expected", [
     ("", ""),
     ("prefixes", "prefixes"),

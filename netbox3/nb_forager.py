@@ -9,7 +9,6 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-
 from vhelpers import vstr
 
 from netbox3 import nb_tree
@@ -20,7 +19,7 @@ from netbox3.foragers.dcim import DcimAF
 from netbox3.foragers.extras import ExtrasAF
 from netbox3.foragers.ipam import IpamAF
 from netbox3.foragers.joiner import Joiner
-from netbox3.foragers.task import LTask, Tasks
+from netbox3.foragers.tasks import Tasks
 from netbox3.foragers.tenancy import TenancyAF
 from netbox3.foragers.users import UsersAF
 from netbox3.foragers.virtualization import VirtualizationAF
@@ -168,6 +167,7 @@ class NbForager:
 
         self.api = NbApi(**kwargs)
         self.cache: str = make_cache_path(cache, **kwargs)
+        self.tasks = Tasks(self)
         self.msgs = Messages(name=self.api.host)
 
         # application foragers
@@ -309,25 +309,6 @@ class NbForager:
         cache = NbCache(tree=self.root, status=status, cache=self.cache)
         cache.write_cache()
 
-    def run_tasks(self) -> None:
-        """Run Tasks.
-
-        Before to run, tasks need be collected by NbForager.{app}.{model}.{method}
-        with parameter task=True.
-        """
-        tasks_o: Tasks = Tasks()
-        for app in self.tree.apps():
-            for model in getattr(self.tree, app).models():
-                tasks: LTask = list(getattr(getattr(getattr(self, app), model), "tasks"))
-                for task in tasks:
-                    getattr(tasks_o, task.method).append(task)
-                tasks.clear()
-
-        for method, tasks in tasks_o.method_tasks():
-            if tasks:
-                urls: LStr = [o.url for o in tasks]
-                self._query_urls(urls)
-
     def version(self) -> str:
         """Get Netbox version from the NbForager.status.
 
@@ -370,18 +351,6 @@ class NbForager:
                     if warnings := nb_object.get("warnings") or []:
                         for warning in warnings:
                             logging.warning(warning)
-
-    # ============================= helpers ==============================
-
-    # noinspection PyProtectedMember
-    def _query_urls(self, urls: LStr) -> None:
-        """Query the given list of URLs in threading ot loop mode and save the results.
-
-        :param urls: A list of URLs to query.
-        :return: None. Update data in object.
-        """
-        forager = self.circuits.circuit_terminations
-        forager._query_urls(urls)
 
 
 # noinspection PyIncorrectDocstring

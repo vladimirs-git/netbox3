@@ -175,6 +175,7 @@ class BaseC:
 
         self._default_get: DList = self._init_default_get()
         self._loners: LStr = self._init_loners()
+        # TODO migrate to self._tasks
         self._results: LDAny = []  # cache for received objects from Netbox
         self._session: Session = requests.session()
 
@@ -363,7 +364,7 @@ class BaseC:
         return max_limit
 
     def _query_data_thread(self, path: str, params_d: DAny) -> None:
-        """Retrieve data from the Netbox.
+        """Request Netbox objects by params_d.
 
         If the number of items in the result exceeds the limit, iterate through the offset
         in a loop mode.

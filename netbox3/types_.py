@@ -3,6 +3,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union, Sequence, TypeVar
 
+from requests import Response
+
 # 1 level
 DAny = Dict[str, Any]
 DInt = Dict[str, int]
@@ -12,6 +14,7 @@ Int = int
 LBool = List[bool]
 LInt = List[int]
 LPath = List[Path]
+LResponse = List[Response]
 LStr = List[str]
 LTInt2 = List[Tuple[int, int]]
 ODatetime = Optional[datetime]
@@ -44,6 +47,7 @@ LDStr = List[DStr]
 LParam = List[Param]
 LT = List[T]
 LT2StrDAny = List[Tuple[str, DAny]]
+LT3StrDAny = List[Tuple[str, str, DAny]]
 LTup2 = List[T2Str]
 LValue = List[Value]
 ODAny = Optional[DAny]
@@ -65,7 +69,7 @@ LLParam = List[LParam]
 ODDAny = Optional[DDAny]
 ODLStr = Optional[DLStr]
 OUStr = Optional[UStr]
-ULDAny = Union[LDAny, DAny]
+ULDAny = Union[DAny, LDAny]
 
 # 4 level
 DDDLInt = Dict[str, DDLInt]

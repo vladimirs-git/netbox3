@@ -10,15 +10,15 @@ from queue import Queue
 from threading import Thread
 from urllib.parse import urlparse, parse_qs
 
-from vhelpers import vlist, vstr, vparam
+from vhelpers import vlist, vstr
 
 from netbox3 import helpers as h
 from netbox3.branch.nb_branch import NbBranch
-from netbox3.foragers.task import LTask, Task
+from netbox3.foragers.tasks import TasksF
 from netbox3.nb_api import NbApi
 from netbox3.nb_tree import NbTree, missed_urls
-from netbox3.types_ import LDAny, DiDAny, LStr, LT2StrDAny, DList, LDList, TLists, LParam
-from urllib.parse import urlencode
+from netbox3.types_ import LDAny, DiDAny, LStr, LT2StrDAny, DList, LDList, TLists
+
 
 class Forager:
     """Forager methods for different models."""
@@ -35,7 +35,7 @@ class Forager:
         self.model = model
         self.api: NbApi = forager_a.api
         self.connector = getattr(getattr(self.api, app), model)
-        self.tasks: LTask = []
+        self.tasks = TasksF(self)
         # data
         self.root: NbTree = forager_a.root
         self.root_d: DiDAny = getattr(getattr(self.root, app), model)
@@ -71,40 +71,12 @@ class Forager:
         """
         return len(self.root_d)
 
-    # TODO test
-    def _create_tasks(self, method_: str, **kwargs) -> None:
-        """Create tasks.
-
-        :param method_: Method name.
-        :param kwargs: Filtering parameters.
-
-        :return: None. Update self object.
-        """
-        params_ld: LDList = self.connector.validate_params(**kwargs)
-        tasks = []
-        for params_d in params_ld:
-            model = h.attr_to_model(self.model)
-            query: str = urlencode(vparam.from_dict(params_d))
-
-            task = Task(
-                url=f"{self.connector.url_base}{self.app}/{model}/?{query}",
-                app=self.app,
-                model=self.model,
-                method=method_,
-                params_d=params_d,
-            )
-            tasks.append(task)
-        self.tasks.extend(tasks)
-
     # noinspection PyProtectedMember
-    def get(self, task: bool = False, nested: bool = False, **kwargs) -> None:
+    def get(self, nested: bool = False, **kwargs) -> None:
         """Retrieve data from the Netbox.
 
         Request data based on the filter parameters (kwargs described in the
         NbApi connector) and save to the NbForager.root.
-
-        :param bool task: `True` - Schedule task of request for next threading,
-            `False` - Send request to the Netbox API. Default is `False`.
 
         :param bool nested: `True` - Request base and nested objects,
             `False` - Request only base objects. Default id `False`.
@@ -113,10 +85,6 @@ class Forager:
 
         :return: None. Update self object.
         """
-        if task:
-            self._create_tasks(method_="get", **kwargs)
-            return
-
         # Query main data
         nb_objects: LDAny = self._get_root_data_from_netbox(**kwargs)
 
@@ -125,37 +93,7 @@ class Forager:
             urls: LStr = self._collect_nested_urls(nb_objects)
             self._query_urls(urls)
 
-    def _query_urls(self, urls: LStr) -> None:
-        """Query the given list of URLs in threading ot loop mode and save the results.
-
-        :param urls: A list of URLs to query.
-        :return: None. Update data in object.
-        """
-        results: LDAny = []
-
-        # threading
-        if self.threads > 1:
-            path_params: LT2StrDAny = self._get_path_params(urls)
-            self._clear_connector_results(path_params)
-            self._query_threads(path_params)
-            results_: LDAny = self._pop_connector_results(path_params)
-            results.extend(results_)
-            self._save_results(results)
-            return
-
-        # loop
-        for url in urls:
-            app, model, _ = h.split_url(url)
-            path = f"{app}/{model}/"
-            connector = self._get_connector(path)
-            params_d: DList = parse_qs(urlparse(url).query)
-            params_ld: LDList = connector.validate_params(**params_d)
-
-            for params_d in params_ld:
-                results_ = connector.query_loop(path, params_d)
-                results.extend(results_)
-
-        self._save_results(results)
+    # =============================== find ===============================
 
     def find_root(self, **kwargs) -> LDAny:
         """Find Netbox objects in NbForager.root by extended finding parameters.
@@ -264,13 +202,14 @@ class Forager:
         """Get path of app/model and parameters based on the list of URLs.
 
         :param urls: A list of URLs.
-
         :return: A list of tuples containing the path and parameters.
+        :example:
+            urls = ["https://netbox/api/ipam/vrfs/?id=1&id=2"]
+            _get_path_params(urls) -> [("ipam/vrfs/", {"id": ["1", "2"]})]
         """
         path_params: LT2StrDAny = []
         for url in urls:
-            app, model, _ = h.split_url(url)
-            path = f"{app}/{model}/"
+            path = h.url_to_path(url)
             connector = self._get_connector(path)
             params_d = parse_qs(urlparse(url).query)
             params_ld: LDAny = h.slice_params_ld(
@@ -284,51 +223,18 @@ class Forager:
         return path_params
 
     # noinspection PyProtectedMember
-    def _clear_connector_results(self, path_params: LT2StrDAny) -> None:
-        """Clear results in connectors by path app/model."""
-        for path, _ in path_params:
-            connector = self._get_connector(path)
-            connector._results.clear()  # pylint: disable=W0212
-
-    def _query_threads(self, path_params: LT2StrDAny) -> None:
-        """Retrieve data from Netbox in threaded mode.
-
-        :param path_params: A list of tuples containing the path app/model and parameters.
-
-        :return: None. Save results to self._results.
-        """
-        queue: Queue = Queue()
-        for path, params_d in path_params:
-            queue.put((path, params_d))
-
-        for idx in range(self.threads):
-            if self.interval:
-                time.sleep(self.interval)
-            thread = Thread(name=f"Thread-{idx}", target=self._run_queue, args=(queue,))
-            thread.start()
-        queue.join()
+    def _clear_connector_results(self) -> None:  # TODO migrate to self._tasks
+        """Clear results in connectors."""
+        for app in self.tree.apps():
+            for model in getattr(self.tree, app).models():
+                results: LDAny = getattr(getattr(getattr(self.api, app), model), "_results")
+                results.clear()
 
     # noinspection PyProtectedMember
-    def _run_queue(self, queue: Queue) -> None:
-        """Process tasks from the queue.
-
-        This method dequeues and executes tasks until the queue is empty.
-        Each task is expected to be a callable method with its corresponding params_d parameters.
-        :param queue: A queue containing path app/model and parameters pairs to be requested.
-
-        :return: None. Update connector._results list.
-        """
-        while not queue.empty():
-            path, params_d = queue.get()
-            connector = self._get_connector(path)
-            connector._query_data_thread(path=path, params_d=params_d)  # pylint: disable=W0212
-            queue.task_done()
-
-    # noinspection PyProtectedMember
-    def _pop_connector_results(self, path_params: LT2StrDAny) -> LDAny:
-        """Get results from connectors by path app/model and delete cached results."""
+    def _pop_connector_results(self, paths: LStr) -> LDAny:  # TODO migrate to self._tasks
+        """Get results from connectors by path app/model and delete cached data."""
         results: LDAny = []
-        for path, _ in path_params:
+        for path in paths:
             connector = self._get_connector(path)
             results.extend(connector._results)  # pylint: disable=W0212
             connector._results.clear()  # pylint: disable=W0212
@@ -347,9 +253,9 @@ class Forager:
         connector = getattr(getattr(self.api, app), model)
         return connector
 
-    def _save_results(self, results):
-        # save
-        for data in results:
+    def _save_results(self, items: LDAny) -> None:  # TODO migrate to self._tasks
+        """Save Netbox objects to NbForager.root."""
+        for data in items:
             app, model, digit = h.split_url(data["url"])
             path = f"{app}/{model}"
             model_d: DiDAny = self._get_root_data(path)
@@ -365,6 +271,74 @@ class Forager:
         app, model = h.path_to_attrs(path)
         data = getattr(getattr(self.root, app), model)
         return data
+
+    # ============================ threading =============================
+
+    def _query_urls(self, urls: LStr) -> None:  # TODO migrate to self.tasks
+        """Query the given list of URLs in threading ot loop mode and save the results.
+
+        :param urls: A list of URLs to query.
+        :return: None. Update data in object.
+        """
+        results: LDAny = []
+        self._clear_connector_results()
+
+        # threading
+        if self.threads > 1:
+            path_params: LT2StrDAny = self._get_path_params(urls)
+            self._query_threads(path_params)
+            paths = [t[0] for t in path_params]
+            results_: LDAny = self._pop_connector_results(paths)
+            results.extend(results_)
+            self._save_results(results)
+            return
+
+        # loop
+        for url in urls:
+            path = h.url_to_path(url)
+            connector = self._get_connector(path)
+            params_d: DList = parse_qs(urlparse(url).query)
+            params_ld: LDList = connector.validate_params(**params_d)
+
+            for params_d in params_ld:
+                results_ = connector.query_loop(path, params_d)
+                results.extend(results_)
+
+        self._save_results(results)
+
+    def _query_threads(self, path_params: LT2StrDAny) -> None:  # TODO migrate to self.tasks
+        """Retrieve data from Netbox in threaded mode.
+
+        :param path_params: A list of tuples containing the path app/model and parameters.
+
+        :return: None. Save results to self._results.
+        """
+        queue: Queue = Queue()
+        for path, params_d in path_params:
+            queue.put((path, params_d))
+
+        for idx in range(self.threads):
+            if self.interval:
+                time.sleep(self.interval)
+            thread = Thread(name=f"Thread-{idx}", target=self._run_query_queue, args=(queue,))
+            thread.start()
+        queue.join()
+
+    # noinspection PyProtectedMember
+    def _run_query_queue(self, queue: Queue) -> None:  # TODO migrate to self.tasks
+        """Process tasks from the queue.
+
+        This method dequeues and executes tasks until the queue is empty.
+        Each task is expected to be a callable method with its corresponding params_d parameters.
+        :param queue: A queue containing path app/model and parameters pairs to be requested.
+
+        :return: None. Update connector._results list.
+        """
+        while not queue.empty():
+            path, params_d = queue.get()
+            connector = self._get_connector(path)
+            connector._query_data_thread(path=path, params_d=params_d)  # pylint: disable=W0212
+            queue.task_done()
 
 
 def _find(objects: LDAny, **kwargs) -> LDAny:

@@ -129,8 +129,8 @@ def test__get_connector(nbf: NbForager, path, expected: Any):
 
 def test__clear_connector_results(prepare_connector_results):
     """Forager._clear_connector_results()."""
-    nbf, path_params = prepare_connector_results
-    nbf.ipam.vrfs._clear_connector_results(path_params=path_params)
+    nbf, _ = prepare_connector_results
+    nbf.ipam.vrfs._clear_connector_results()
     assert nbf.api.circuits.circuit_terminations._results == []
     assert nbf.api.ipam.vrfs._results == []
 
@@ -138,7 +138,8 @@ def test__clear_connector_results(prepare_connector_results):
 def test__pop_connector_results(prepare_connector_results):
     """Forager._pop_connector_results()."""
     nbf, path_params = prepare_connector_results
-    actual = nbf.ipam.vrfs._pop_connector_results(path_params=path_params)
+    paths = [t[0] for t in path_params]
+    actual = nbf.ipam.vrfs._pop_connector_results(paths=paths)
     assert actual == [{"url": "circuit/circuit-terminations/1"}, {"url": "ipam/vrfs/1"}]
     assert nbf.api.circuits.circuit_terminations._results == []
     assert nbf.api.ipam.vrfs._results == []
@@ -300,3 +301,18 @@ def test__find_rse(nbf_t: NbForager, params, expected: Any):
     else:
         with pytest.raises(expected):
             nbf_t.ipam.prefixes.find_rse(**params)
+
+
+# ============================= helpers ==============================
+
+@pytest.mark.parametrize("urls, expected", [
+    ([], []),
+    (["https://netbox/api/ipam/vrfs/"], [("ipam/vrfs/", {})]),
+    (["https://netbox/api/ipam/vrfs/?id=1&id=2"], [("ipam/vrfs/", {"id": ["1", "2"]})]),
+    (["https://netbox/api/ipam/vrfs/?id=1", "https://netbox/api/ipam/vrfs/?id=2"],
+     [("ipam/vrfs/", {"id": "1"}), ("ipam/vrfs/", {"id": "2"})]),
+])
+def test__get_path_params(nbf: NbForager, urls, expected):
+    """Forager._get_path_params()."""
+    actual = nbf.ipam.prefixes._get_path_params(urls=urls)
+    assert actual == expected
