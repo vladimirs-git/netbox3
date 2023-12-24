@@ -26,7 +26,7 @@ def attr_name(obj: Any) -> str:
     name = obj.__class__.__name__
     if isinstance(obj, str):
         name = obj
-    name = replace_upper(name)
+    name = class_to_attr(name)
     if name[:-1].endswith("_"):
         name = name[:-2]
         if name[:-1].endswith("_"):
@@ -45,7 +45,7 @@ def attr_names(obj: Any) -> LStr:
         attr_names(NbForager.tenancy) -> ["tenant_groups", "tenants"]
     """
     attrs = [s for s in dir(obj) if s[0].isupper()]
-    methods = [replace_upper(s)[:-2] for s in attrs]
+    methods = [class_to_attr(s)[:-2] for s in attrs]
     return methods
 
 
@@ -154,7 +154,7 @@ def path_to_attrs(path: str) -> T2Str:
     return app, model
 
 
-def replace_upper(word: str) -> str:
+def class_to_attr(word: str) -> str:
     """Replace upper character with underscore and lower.
 
     :param word: The word to be modified.

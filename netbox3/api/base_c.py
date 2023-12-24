@@ -108,8 +108,7 @@ class BaseC:
 
         :param str scheme: Access method: `https` or `http`. Default is `https`.
 
-        :param int port: TCP port.
-            Default is `443` for scheme=`https`, `80` for scheme=`http`.
+        :param int port: TCP port. Default is `443` for scheme=`https`, `80` for scheme=`http`.
 
         :param bool verify: Transport Layer Security.
             `True` - A TLS certificate required,

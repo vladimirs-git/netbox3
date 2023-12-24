@@ -111,9 +111,9 @@ def test__path_to_attrs(path, expected: Any):
     ("TextText", "text_text"),
     ("TextTextText", "text_text_text"),
 ])
-def test__replace_upper(word, expected):
-    """helpers.replace_upper()"""
-    actual = h.replace_upper(word)
+def test__class_to_attr(word, expected):
+    """helpers.class_to_attr()"""
+    actual = h.class_to_attr(word)
     assert actual == expected
 
 

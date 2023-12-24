@@ -54,7 +54,6 @@ test = ["pytest"]
 "Bug Tracker" = "https://github.com/vladimirs-git/netbox3/issues"
 "Download URL" = "https://github.com/vladimirs-git/netbox3/archive/refs/tags/0.1.15.tar.gz"
 
-
 [tool.mypy]
 python_version = "3.8"
 
@@ -86,9 +85,6 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false  # arguments on separate lines
 line-ending = "auto"
-
-[tool.ruff.lint.pydocstyle]
-convention = "pep257"  # docstring style
 
 [build-system]
 requires = ["poetry-core"]
