@@ -38,6 +38,7 @@ def test__version__changelog():
     assert actual == expected, f"version in {path=}"
 
 
+# noinspection PyTypeChecker
 def test__version__docs():
     """Version in docs/config.py."""
     path = Path.joinpath(ROOT, "docs", "conf.py")
