@@ -2,7 +2,7 @@
 
 """Circuits connectors."""
 
-from netbox3.api.base_ca import BaseAC
+from netbox3.api.base_ac import BaseAC
 from netbox3.api.connector import Connector
 
 

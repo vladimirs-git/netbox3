@@ -1,6 +1,6 @@
 # pylint: disable=R0902,R0903
 
-"""Connector Base."""
+"""Base for Connector."""
 
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ LONERS: DLStr = {
 
 
 class BaseC:
-    """Connector Base."""
+    """Base for Connector."""
 
     path = ""
     _slices = [
